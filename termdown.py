@@ -55,13 +55,13 @@ def draw_blink(stdscr, flipflop):
     y, x = stdscr.getmaxyx()
     for i in range(y):
         if flipflop:
-            stdscr.addstr(i, 0, " " * (x-1), curses.color_pair(1))
+            stdscr.addstr(i, 0, " " * (x-1), curses.color_pair(2))
         else:
             stdscr.addstr(i, 0, " " * (x-1))
     stdscr.refresh()
 
 
-def draw_text(stdscr, text):
+def draw_text(stdscr, text, color=0):
     y, x = stdscr.getmaxyx()
     lines = pad_to_size(text, x-1, y-1).rstrip("\n").split("\n")
     i = 0
@@ -70,13 +70,16 @@ def draw_text(stdscr, text):
             i,
             0,
             line,
+            curses.color_pair(color),
         )
         i += 1
     stdscr.refresh()
 
 
 def countdown(stdscr, **kwargs):
-    curses.init_pair(1, curses.COLOR_RED, curses.COLOR_RED)
+    curses.use_default_colors()
+    curses.init_pair(1, curses.COLOR_RED, -1)
+    curses.init_pair(2, curses.COLOR_RED, curses.COLOR_RED)
 
     f = Figlet(font='univers')
 
@@ -88,7 +91,11 @@ def countdown(stdscr, **kwargs):
 
 
     while i > 0:
-        draw_text(stdscr, f.renderText(format_seconds(i)))
+        draw_text(
+            stdscr,
+            f.renderText(format_seconds(i)),
+            color=1 if i <= 3 else 0,
+        )
         i -= 1
         try:
             sleep(1)
