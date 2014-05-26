@@ -1,7 +1,8 @@
+#!/usr/bin/env python
 import curses
-from sys import argv
 from time import sleep
 
+import click
 from pyfiglet import Figlet
 
 
@@ -27,10 +28,8 @@ def pad_to_size(text, x, y):
     return output
 
 
-
 def draw_text(stdscr, text):
     y, x = stdscr.getmaxyx()
-    stdscr.erase()
     lines = pad_to_size(text, x-1, y-1).rstrip("\n").split("\n")
     i = 0
     for line in lines:
@@ -42,14 +41,21 @@ def draw_text(stdscr, text):
         i += 1
     stdscr.refresh()
 
-def main(stdscr):
-    count = 5
-    f = Figlet(font='ogre')
-    i = count
+
+def countdown(stdscr, start):
+    f = Figlet(font='univers')
+    i = int(start)
     while i > 0:
         draw_text(stdscr, f.renderText(str(i)))
         i -= 1
         sleep(1)
 
 
-curses.wrapper(main)
+@click.command()
+@click.argument('start')
+def main(start):
+    curses.wrapper(countdown, start)
+
+
+if __name__ == '__main__':
+    main()
