@@ -1,9 +1,32 @@
 #!/usr/bin/env python
 import curses
+from datetime import datetime
 from time import sleep
 
 import click
+from dateutil.parser import parse
 from pyfiglet import Figlet
+
+
+def format_seconds(seconds):
+    if seconds <= 60:
+        return str(seconds)
+    output = ""
+    if seconds > 31557600:
+        output += "{}y ".format(int(seconds / 31557600))
+        seconds = seconds % 31557600
+    if seconds > 86400:
+        output += "{}d ".format(int(seconds / 86400))
+        seconds = seconds % 86400
+    if seconds > 3600:
+        output += "{}h ".format(int(seconds / 3600))
+        seconds = seconds % 3600
+    if seconds > 60:
+        output += "{}m ".format(int(seconds / 60))
+        seconds = seconds % 60
+    if seconds:
+        output += "{}s".format(int(seconds))
+    return output.strip()
 
 
 def pad_to_size(text, x, y):
@@ -54,10 +77,18 @@ def draw_text(stdscr, text):
 
 def countdown(stdscr, **kwargs):
     curses.init_pair(1, curses.COLOR_RED, curses.COLOR_RED)
+
     f = Figlet(font='univers')
-    i = int(kwargs['start'])
+
+    if kwargs['start'].isdigit():
+        i = int(kwargs['start'])
+    else:
+        date = parse(kwargs['start'])
+        i = int((date - datetime.now()).total_seconds())
+
+
     while i > 0:
-        draw_text(stdscr, f.renderText(str(i)))
+        draw_text(stdscr, f.renderText(format_seconds(i)))
         i -= 1
         sleep(1)
 
