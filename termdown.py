@@ -90,14 +90,20 @@ def countdown(stdscr, **kwargs):
     while i > 0:
         draw_text(stdscr, f.renderText(format_seconds(i)))
         i -= 1
-        sleep(1)
+        try:
+            sleep(1)
+        except KeyboardInterrupt:
+            return
 
     if kwargs['blink']:
         flip = True
         while True:
             draw_blink(stdscr, flip)
             flip = not flip
-            sleep(1)
+            try:
+                sleep(1)
+            except KeyboardInterrupt:
+                return
 
 
 @click.command()
