@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 import curses
-from datetime import datetime
+from datetime import datetime, timedelta
+import re
 from time import sleep
 
 import click
 from dateutil.parser import parse
 from pyfiglet import Figlet
+
+TIMEDELTA_REGEX = re.compile(r'((?P<hours>\d+)h ?)?((?P<minutes>\d+)m ?)?((?P<seconds>\d+)s ?)?')
 
 
 def format_seconds(seconds):
@@ -51,6 +54,17 @@ def pad_to_size(text, x, y):
     return output
 
 
+def parse_timedelta(deltastr):
+    matches = TIMEDELTA_REGEX.match(deltastr)
+    if not matches:
+        return None
+    components = {}
+    for name, value in matches.groupdict().items():
+        if value:
+            components[name] = int(value)
+    return int(timedelta(**components).total_seconds())
+
+
 def draw_blink(stdscr, flipflop):
     y, x = stdscr.getmaxyx()
     for i in range(y):
@@ -83,12 +97,15 @@ def countdown(stdscr, **kwargs):
 
     f = Figlet(font='univers')
 
-    if kwargs['start'].isdigit():
+    timedelta_secs = parse_timedelta(kwargs['start'])
+
+    if timedelta_secs:
+        i = timedelta_secs
+    elif kwargs['start'].isdigit():
         i = int(kwargs['start'])
     else:
         date = parse(kwargs['start'])
         i = int((date - datetime.now()).total_seconds())
-
 
     while i > 0:
         draw_text(
