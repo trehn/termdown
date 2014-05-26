@@ -95,6 +95,8 @@ def countdown(stdscr, **kwargs):
         except KeyboardInterrupt:
             return
 
+    curses.beep()
+
     if kwargs['blink']:
         flip = True
         while True:
