@@ -28,6 +28,16 @@ def pad_to_size(text, x, y):
     return output
 
 
+def draw_blink(stdscr, flipflop):
+    y, x = stdscr.getmaxyx()
+    for i in range(y):
+        if flipflop:
+            stdscr.addstr(i, 0, " " * (x-1), curses.color_pair(1))
+        else:
+            stdscr.addstr(i, 0, " " * (x-1))
+    stdscr.refresh()
+
+
 def draw_text(stdscr, text):
     y, x = stdscr.getmaxyx()
     lines = pad_to_size(text, x-1, y-1).rstrip("\n").split("\n")
@@ -42,19 +52,28 @@ def draw_text(stdscr, text):
     stdscr.refresh()
 
 
-def countdown(stdscr, start):
+def countdown(stdscr, **kwargs):
+    curses.init_pair(1, curses.COLOR_RED, curses.COLOR_RED)
     f = Figlet(font='univers')
-    i = int(start)
+    i = int(kwargs['start'])
     while i > 0:
         draw_text(stdscr, f.renderText(str(i)))
         i -= 1
         sleep(1)
 
+    if kwargs['blink']:
+        flip = True
+        while True:
+            draw_blink(stdscr, flip)
+            flip = not flip
+            sleep(1)
+
 
 @click.command()
+@click.option("-b", "--blink", default=False, is_flag=True)
 @click.argument('start')
-def main(start):
-    curses.wrapper(countdown, start)
+def main(**kwargs):
+    curses.wrapper(countdown, **kwargs)
 
 
 if __name__ == '__main__':
