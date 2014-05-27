@@ -133,10 +133,16 @@ def countdown(stdscr, **kwargs):
 
 
 @click.command()
-@click.option("-b", "--blink", default=False, is_flag=True)
-@click.option("-f", "--font", default="univers")
+@click.option("-b", "--blink", default=False, is_flag=True,
+              help="Flash terminal after countdown")
+@click.option("-f", "--font", default="univers",
+              help="Choose from http://www.figlet.org/examples.html")
 @click.argument('start')
 def main(**kwargs):
+    """
+    Starts a countdown to or from START. Example values for START:
+    10, '1h 5m 30s', '12:00', '2020-01-01', '2020-01-01 14:00'.
+    """
     curses.wrapper(countdown, **kwargs)
 
 
