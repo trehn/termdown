@@ -8,7 +8,9 @@ import click
 from dateutil.parser import parse
 from pyfiglet import Figlet
 
-TIMEDELTA_REGEX = re.compile(r'((?P<hours>\d+)h ?)?((?P<minutes>\d+)m ?)?((?P<seconds>\d+)s ?)?')
+TIMEDELTA_REGEX = re.compile(r'((?P<hours>\d+)h ?)?'
+                             r'((?P<minutes>\d+)m ?)?'
+                             r'((?P<seconds>\d+)s ?)?')
 
 
 def format_seconds(seconds):
