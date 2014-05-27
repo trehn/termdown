@@ -95,7 +95,7 @@ def countdown(stdscr, **kwargs):
     curses.init_pair(1, curses.COLOR_RED, -1)
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_RED)
 
-    f = Figlet(font='univers')
+    f = Figlet(font=kwargs['font'])
 
     timedelta_secs = parse_timedelta(kwargs['start'])
 
@@ -134,6 +134,7 @@ def countdown(stdscr, **kwargs):
 
 @click.command()
 @click.option("-b", "--blink", default=False, is_flag=True)
+@click.option("-f", "--font", default="univers")
 @click.argument('start')
 def main(**kwargs):
     curses.wrapper(countdown, **kwargs)
