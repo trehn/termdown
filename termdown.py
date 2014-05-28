@@ -9,7 +9,9 @@ import click
 from dateutil.parser import parse
 from pyfiglet import Figlet
 
-TIMEDELTA_REGEX = re.compile(r'((?P<hours>\d+)h ?)?'
+TIMEDELTA_REGEX = re.compile(r'((?P<years>\d+)y ?)?'
+                             r'((?P<days>\d+)d ?)?'
+                             r'((?P<hours>\d+)h ?)?'
                              r'((?P<minutes>\d+)m ?)?'
                              r'((?P<seconds>\d+)s ?)?')
 
@@ -65,6 +67,11 @@ def parse_timedelta(deltastr):
     for name, value in matches.groupdict().items():
         if value:
             components[name] = int(value)
+    for period, hours in (('days', 24), ('years', 8766)):
+        if period in components:
+            components['hours'] = components.get('hours', 0) + \
+                                  components[period] * hours
+            del components[period]
     return int(timedelta(**components).total_seconds())
 
 
