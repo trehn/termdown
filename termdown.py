@@ -96,6 +96,7 @@ def countdown(stdscr, **kwargs):
     curses.use_default_colors()
     curses.init_pair(1, curses.COLOR_RED, -1)
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_RED)
+    curses.curs_set(False)
 
     f = Figlet(font=kwargs['font'])
 
@@ -110,6 +111,7 @@ def countdown(stdscr, **kwargs):
         i = int((date - datetime.now()).total_seconds())
 
     while i > 0:
+        stdscr.erase()
         draw_text(
             stdscr,
             f.renderText(format_seconds(i)),
