@@ -164,7 +164,7 @@ def countdown(stdscr, **kwargs):
             draw_blink(stdscr, flip)
             flip = not flip
             try:
-                sleep(1)
+                sleep(0.5)
             except KeyboardInterrupt:
                 return
 
