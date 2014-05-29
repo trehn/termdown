@@ -41,18 +41,16 @@ def pad_to_size(text, x, y):
     number_of_input_lines = len(input_lines)
     x = max(x, longest_input_line)
     y = max(y, number_of_input_lines)
-    empty_line = " " * x + "\n"
     output = ""
 
     padding_top = int((y - number_of_input_lines) / 2)
     padding_bottom = y - number_of_input_lines - padding_top
     padding_left = int((x - longest_input_line) / 2)
-    padding_right = x - longest_input_line - padding_left
 
-    output += padding_top * empty_line
+    output += padding_top * "\n"
     for line in input_lines:
-        output += padding_left * " " + line + padding_right * " " + "\n"
-    output += padding_bottom * empty_line
+        output += padding_left * " " + line + "\n"
+    output += padding_bottom * "\n"
 
     return output
 
