@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import curses
 from datetime import datetime, timedelta
+from math import ceil
 import re
 from time import sleep
 
@@ -96,30 +97,59 @@ def countdown(stdscr, **kwargs):
     curses.use_default_colors()
     curses.init_pair(1, curses.COLOR_RED, -1)
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_RED)
+    curses.curs_set(False)
 
     f = Figlet(font=kwargs['font'])
 
     timedelta_secs = parse_timedelta(kwargs['start'])
+    sync_start = datetime.now()
 
     if timedelta_secs:
-        i = timedelta_secs
+        target = datetime.now() + timedelta(seconds=timedelta_secs)
     elif kwargs['start'].isdigit():
-        i = int(kwargs['start'])
+        target = datetime.now() + timedelta(seconds=int(kwargs['start']))
     else:
-        date = parse(kwargs['start'])
-        i = int((date - datetime.now()).total_seconds())
+        target = parse(kwargs['start'])
+        # You can argue about the following line. Here's what I had in
+        # mind: When I do "termdown 10" (the two cases above), I want a
+        # countdown for the next 10 seconds. Okay. But when I do
+        # "termdown 23:52", I want a countdown that ends at that exact
+        # moment -- the countdown is related to real time. Thus, I want
+        # my frames to be drawn at full seconds, so I enforce
+        # microsecond=0.
+        # Now, what about "termdown '1h 23m'"? That's ambigous. It could
+        # refer to a point in real time -- or not.
+        sync_start = sync_start.replace(microsecond=0)
 
-    while i > 0:
+    delta = int(ceil((target - datetime.now()).total_seconds()))
+    while delta > 0:
+        stdscr.erase()
         draw_text(
             stdscr,
-            f.renderText(format_seconds(i)),
-            color=1 if i <= 3 else 0,
+            f.renderText(format_seconds(delta)),
+            color=1 if delta <= 3 else 0,
         )
-        i -= 1
         try:
-            sleep(1)
+            # We want to sleep until this point of time has been
+            # reached:
+            sleep_target = sync_start + timedelta(seconds=1)
+
+            # If sync_start has microsecond=0, it might happen that we
+            # need to skip one frame (the very first one). This occurs
+            # when the program has been startet at, say,
+            # "2014-05-29 20:27:57.930651". Now suppose rendering the
+            # frame took about 0.2 seconds. The real time now is
+            # "2014-05-29 20:27:58.130000" and sleep_target is
+            # "2014-05-29 20:27:58.000000" which is in the past! We're
+            # already too late. We could either skip that frame
+            # completely or we can draw it right now. I chose to do the
+            # latter: Only sleep if haven't already missed our target.
+            if sleep_target > datetime.now():
+                sleep((sleep_target - datetime.now()).total_seconds())
+            sync_start = sleep_target
         except KeyboardInterrupt:
             return
+        delta = int(ceil((target - datetime.now()).total_seconds()))
 
     curses.beep()
 
