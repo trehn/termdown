@@ -20,20 +20,18 @@ def format_seconds(seconds):
     if seconds <= 60:
         return str(seconds)
     output = ""
-    if seconds > 31557600:
-        output += "{}y ".format(int(seconds / 31557600))
-        seconds = seconds % 31557600
-    if seconds > 86400:
-        output += "{}d ".format(int(seconds / 86400))
-        seconds = seconds % 86400
-    if seconds > 3600:
-        output += "{}h ".format(int(seconds / 3600))
-        seconds = seconds % 3600
-    if seconds > 60:
-        output += "{}m ".format(int(seconds / 60))
-        seconds = seconds % 60
-    if seconds:
-        output += "{}s".format(int(seconds))
+    for period, period_seconds in (
+        ('y', 31557600),
+        ('d', 86400),
+        ('h', 3600),
+        ('m', 60),
+        ('s', 1),
+    ):
+        if seconds > period_seconds:
+            output += str(int(seconds / period_seconds))
+            output += period
+            output += " "
+            seconds = seconds % period_seconds
     return output.strip()
 
 
