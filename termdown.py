@@ -124,15 +124,17 @@ def countdown(stdscr, **kwargs):
         # refer to a point in real time -- or not.
         sync_start = sync_start.replace(microsecond=0)
 
-    delta = int(ceil((target - datetime.now()).total_seconds()))
-    while delta > 0:
-        stdscr.erase()
-        draw_text(
-            stdscr,
-            f.renderText(format_seconds(delta)),
-            color=1 if delta <= 3 else 0,
-        )
+    seconds_left = int(ceil((target - datetime.now()).total_seconds()))
+
+    while seconds_left > 0:
         try:
+            stdscr.erase()
+            draw_text(
+                stdscr,
+                f.renderText(format_seconds(seconds_left)),
+                color=1 if seconds_left <= 3 else 0,
+            )
+
             # We want to sleep until this point of time has been
             # reached:
             sleep_target = sync_start + timedelta(seconds=1)
@@ -147,12 +149,14 @@ def countdown(stdscr, **kwargs):
             # already too late. We could either skip that frame
             # completely or we can draw it right now. I chose to do the
             # latter: Only sleep if haven't already missed our target.
-            if sleep_target > datetime.now():
-                sleep((sleep_target - datetime.now()).total_seconds())
+            now = datetime.now()
+            if sleep_target > now:
+                sleep((sleep_target - now).total_seconds())
             sync_start = sleep_target
+
+            seconds_left = int(ceil((target - datetime.now()).total_seconds()))
         except KeyboardInterrupt:
             return
-        delta = int(ceil((target - datetime.now()).total_seconds()))
 
     curses.beep()
 
