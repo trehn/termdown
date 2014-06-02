@@ -173,6 +173,10 @@ def countdown(stdscr, **kwargs):
                 sleep(0.5)
             except KeyboardInterrupt:
                 return
+    elif kwargs['text']:
+        draw_text(stdscr, f.renderText(kwargs['text']))
+        while True:
+            sleep(47)
 
 
 def curses_setup():
@@ -184,9 +188,11 @@ def curses_setup():
 
 @click.command()
 @click.option("-b", "--blink", default=False, is_flag=True,
-              help="Flash terminal after countdown")
+              help="Flash terminal at end of countdown")
 @click.option("-f", "--font", default="univers",
               help="Choose from http://www.figlet.org/examples.html")
+@click.option("-t", "--text",
+              help="Text to display at end of countdown")
 @click.argument('start')
 def main(**kwargs):
     """
