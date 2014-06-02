@@ -97,10 +97,7 @@ def draw_text(stdscr, text, color=0):
 
 
 def countdown(stdscr, **kwargs):
-    curses.use_default_colors()
-    curses.init_pair(1, curses.COLOR_RED, -1)
-    curses.init_pair(2, curses.COLOR_RED, curses.COLOR_RED)
-    curses.curs_set(False)
+    curses_setup()
 
     f = Figlet(font=kwargs['font'])
 
@@ -169,6 +166,13 @@ def countdown(stdscr, **kwargs):
                 sleep(0.5)
             except KeyboardInterrupt:
                 return
+
+
+def curses_setup():
+    curses.use_default_colors()
+    curses.init_pair(1, curses.COLOR_RED, -1)
+    curses.init_pair(2, curses.COLOR_RED, curses.COLOR_RED)
+    curses.curs_set(False)
 
 
 @click.command()
