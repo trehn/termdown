@@ -16,6 +16,33 @@ TIMEDELTA_REGEX = re.compile(r'((?P<years>\d+)y ?)?'
                              r'((?P<seconds>\d+)s ?)?')
 
 
+def curses_setup():
+    curses.use_default_colors()
+    curses.init_pair(1, curses.COLOR_RED, -1)
+    curses.init_pair(2, curses.COLOR_RED, curses.COLOR_RED)
+    curses.curs_set(False)
+
+
+def draw_blink(stdscr, flipflop):
+    y, x = stdscr.getmaxyx()
+    for i in range(y):
+        if flipflop:
+            stdscr.addstr(i, 0, " " * (x-1), curses.color_pair(2))
+        else:
+            stdscr.addstr(i, 0, " " * (x-1))
+    stdscr.refresh()
+
+
+def draw_text(stdscr, text, color=0):
+    y, x = stdscr.getmaxyx()
+    lines = pad_to_size(text, x-1, y-1).rstrip("\n").split("\n")
+    i = 0
+    for line in lines:
+        stdscr.addstr(i, 0, line, curses.color_pair(color))
+        i += 1
+    stdscr.refresh()
+
+
 def format_seconds(seconds):
     if seconds <= 60:
         return str(seconds)
@@ -78,31 +105,6 @@ def parse_timedelta(deltastr):
                                   components[period] * hours
             del components[period]
     return int(timedelta(**components).total_seconds())
-
-
-def draw_blink(stdscr, flipflop):
-    y, x = stdscr.getmaxyx()
-    for i in range(y):
-        if flipflop:
-            stdscr.addstr(i, 0, " " * (x-1), curses.color_pair(2))
-        else:
-            stdscr.addstr(i, 0, " " * (x-1))
-    stdscr.refresh()
-
-
-def draw_text(stdscr, text, color=0):
-    y, x = stdscr.getmaxyx()
-    lines = pad_to_size(text, x-1, y-1).rstrip("\n").split("\n")
-    i = 0
-    for line in lines:
-        stdscr.addstr(
-            i,
-            0,
-            line,
-            curses.color_pair(color),
-        )
-        i += 1
-    stdscr.refresh()
 
 
 @graceful_ctrlc
@@ -177,13 +179,6 @@ def countdown(stdscr, **kwargs):
         draw_text(stdscr, f.renderText(kwargs['text']))
         while True:
             sleep(47)
-
-
-def curses_setup():
-    curses.use_default_colors()
-    curses.init_pair(1, curses.COLOR_RED, -1)
-    curses.init_pair(2, curses.COLOR_RED, curses.COLOR_RED)
-    curses.curs_set(False)
 
 
 @click.command()
