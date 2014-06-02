@@ -196,6 +196,7 @@ def curses_setup():
 @click.argument('start')
 def main(**kwargs):
     """
+    \b
     Starts a countdown to or from START. Example values for START:
     10, '1h 5m 30s', '12:00', '2020-01-01', '2020-01-01 14:00'.
     """
