@@ -111,15 +111,15 @@ def countdown(stdscr, **kwargs):
 
     f = Figlet(font=kwargs['font'])
 
-    timedelta_secs = parse_timedelta(kwargs['start'])
+    timedelta_secs = parse_timedelta(kwargs['time'])
     sync_start = datetime.now()
 
     if timedelta_secs:
         target = datetime.now() + timedelta(seconds=timedelta_secs)
-    elif kwargs['start'].isdigit():
-        target = datetime.now() + timedelta(seconds=int(kwargs['start']))
+    elif kwargs['time'].isdigit():
+        target = datetime.now() + timedelta(seconds=int(kwargs['time']))
     else:
-        target = parse(kwargs['start'])
+        target = parse(kwargs['time'])
         # You can argue about the following line. Here's what I had in
         # mind: When I do "termdown 10" (the two cases above), I want a
         # countdown for the next 10 seconds. Okay. But when I do
@@ -189,15 +189,15 @@ def curses_setup():
 @click.command()
 @click.option("-b", "--blink", default=False, is_flag=True,
               help="Flash terminal at end of countdown")
-@click.option("-f", "--font", default="univers",
+@click.option("-f", "--font", default="univers", metavar="FONT",
               help="Choose from http://www.figlet.org/examples.html")
 @click.option("-t", "--text",
               help="Text to display at end of countdown")
-@click.argument('start')
+@click.argument('time')
 def main(**kwargs):
     """
     \b
-    Starts a countdown to or from START. Example values for START:
+    Starts a countdown to or from TIME. Example values for TIME:
     10, '1h 5m 30s', '12:00', '2020-01-01', '2020-01-01 14:00'.
     """
     curses.wrapper(countdown, **kwargs)
