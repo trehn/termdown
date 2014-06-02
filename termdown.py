@@ -35,6 +35,15 @@ def format_seconds(seconds):
     return output.strip()
 
 
+def graceful_ctrlc(func):
+    def wrapper(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except KeyboardInterrupt:
+            pass
+    return wrapper
+
+
 def pad_to_size(text, x, y):
     input_lines = text.rstrip().split("\n")
     longest_input_line = max(map(len, input_lines))
@@ -96,6 +105,7 @@ def draw_text(stdscr, text, color=0):
     stdscr.refresh()
 
 
+@graceful_ctrlc
 def countdown(stdscr, **kwargs):
     curses_setup()
 
@@ -124,36 +134,33 @@ def countdown(stdscr, **kwargs):
     seconds_left = int(ceil((target - datetime.now()).total_seconds()))
 
     while seconds_left > 0:
-        try:
-            stdscr.erase()
-            draw_text(
-                stdscr,
-                f.renderText(format_seconds(seconds_left)),
-                color=1 if seconds_left <= 3 else 0,
-            )
+        stdscr.erase()
+        draw_text(
+            stdscr,
+            f.renderText(format_seconds(seconds_left)),
+            color=1 if seconds_left <= 3 else 0,
+        )
 
-            # We want to sleep until this point of time has been
-            # reached:
-            sleep_target = sync_start + timedelta(seconds=1)
+        # We want to sleep until this point of time has been
+        # reached:
+        sleep_target = sync_start + timedelta(seconds=1)
 
-            # If sync_start has microsecond=0, it might happen that we
-            # need to skip one frame (the very first one). This occurs
-            # when the program has been startet at, say,
-            # "2014-05-29 20:27:57.930651". Now suppose rendering the
-            # frame took about 0.2 seconds. The real time now is
-            # "2014-05-29 20:27:58.130000" and sleep_target is
-            # "2014-05-29 20:27:58.000000" which is in the past! We're
-            # already too late. We could either skip that frame
-            # completely or we can draw it right now. I chose to do the
-            # latter: Only sleep if haven't already missed our target.
-            now = datetime.now()
-            if sleep_target > now:
-                sleep((sleep_target - now).total_seconds())
-            sync_start = sleep_target
+        # If sync_start has microsecond=0, it might happen that we
+        # need to skip one frame (the very first one). This occurs
+        # when the program has been startet at, say,
+        # "2014-05-29 20:27:57.930651". Now suppose rendering the
+        # frame took about 0.2 seconds. The real time now is
+        # "2014-05-29 20:27:58.130000" and sleep_target is
+        # "2014-05-29 20:27:58.000000" which is in the past! We're
+        # already too late. We could either skip that frame
+        # completely or we can draw it right now. I chose to do the
+        # latter: Only sleep if haven't already missed our target.
+        now = datetime.now()
+        if sleep_target > now:
+            sleep((sleep_target - now).total_seconds())
+        sync_start = sleep_target
 
-            seconds_left = int(ceil((target - datetime.now()).total_seconds()))
-        except KeyboardInterrupt:
-            return
+        seconds_left = int(ceil((target - datetime.now()).total_seconds()))
 
     curses.beep()
 
