@@ -11,7 +11,6 @@ setup(
     author_email="torsten@rehn.email",
     license="GPLv3",
     url="https://github.com/trehn/termdown",
-    scripts=["termdown"],
     keywords=["terminal", "timer", "countdown", "curses"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -27,4 +26,10 @@ setup(
         "pyfiglet",
         "python-dateutil",
     ],
+    py_modules=['termdown'],
+    entry_points={
+        'console_scripts': [
+            "termdown=termdown:main",
+        ],
+    },
 )
