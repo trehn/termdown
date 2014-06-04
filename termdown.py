@@ -91,6 +91,32 @@ def pad_to_size(text, x, y):
     return output
 
 
+def parse_timestr(timestr):
+    timedelta_secs = parse_timedelta(timestr)
+    sync_start = datetime.now()
+
+    if timedelta_secs:
+        target = datetime.now() + timedelta(seconds=timedelta_secs)
+    elif timestr.isdigit():
+        target = datetime.now() + timedelta(seconds=int(timestr))
+    else:
+        try:
+            target = parse(timestr)
+        except:
+            # unfortunately, dateutil doesn't raise the best exceptions
+            raise ValueError("Unable to parse '{}'".format(timestr))
+
+        # When I do "termdown 10" (the two cases above), I want a
+        # countdown for the next 10 seconds. Okay. But when I do
+        # "termdown 23:52", I want a countdown that ends at that exact
+        # moment -- the countdown is related to real time. Thus, I want
+        # my frames to be drawn at full seconds, so I enforce
+        # microsecond=0.
+        sync_start = sync_start.replace(microsecond=0)
+
+    return (sync_start, target)
+
+
 def parse_timedelta(deltastr):
     matches = TIMEDELTA_REGEX.match(deltastr)
     if not matches:
@@ -108,30 +134,12 @@ def parse_timedelta(deltastr):
 
 
 @graceful_ctrlc
-def countdown(stdscr, **kwargs):
+def countdown(stdscr, time="0", font='univers', blink=False, text=None):
     curses_setup()
 
-    f = Figlet(font=kwargs['font'])
+    f = Figlet(font=font)
 
-    timedelta_secs = parse_timedelta(kwargs['time'])
-    sync_start = datetime.now()
-
-    if timedelta_secs:
-        target = datetime.now() + timedelta(seconds=timedelta_secs)
-    elif kwargs['time'].isdigit():
-        target = datetime.now() + timedelta(seconds=int(kwargs['time']))
-    else:
-        target = parse(kwargs['time'])
-        # You can argue about the following line. Here's what I had in
-        # mind: When I do "termdown 10" (the two cases above), I want a
-        # countdown for the next 10 seconds. Okay. But when I do
-        # "termdown 23:52", I want a countdown that ends at that exact
-        # moment -- the countdown is related to real time. Thus, I want
-        # my frames to be drawn at full seconds, so I enforce
-        # microsecond=0.
-        # Now, what about "termdown '1h 23m'"? That's ambigous. It could
-        # refer to a point in real time -- or not.
-        sync_start = sync_start.replace(microsecond=0)
+    sync_start, target = parse_timestr(time)
 
     seconds_left = int(ceil((target - datetime.now()).total_seconds()))
 
@@ -166,7 +174,7 @@ def countdown(stdscr, **kwargs):
 
     curses.beep()
 
-    if kwargs['blink']:
+    if blink:
         flip = True
         while True:
             draw_blink(stdscr, flip)
@@ -175,8 +183,8 @@ def countdown(stdscr, **kwargs):
                 sleep(0.5)
             except KeyboardInterrupt:
                 return
-    elif kwargs['text']:
-        draw_text(stdscr, f.renderText(kwargs['text']))
+    elif text:
+        draw_text(stdscr, f.renderText(text))
         while True:
             sleep(47)
 
