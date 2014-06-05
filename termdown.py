@@ -179,10 +179,8 @@ def countdown(stdscr, time="0", font='univers', blink=False, text=None):
         while True:
             draw_blink(stdscr, flip)
             flip = not flip
-            try:
-                sleep(0.5)
-            except KeyboardInterrupt:
-                return
+            sleep(0.5)
+
     elif text:
         draw_text(stdscr, f.renderText(text))
         while True:
