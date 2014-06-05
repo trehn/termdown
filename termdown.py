@@ -134,7 +134,7 @@ def parse_timedelta(deltastr):
 
 
 @graceful_ctrlc
-def countdown(stdscr, time="0", font='univers', blink=False, text=None):
+def countdown(stdscr, time="0", font='univers', blink=False, quit_after=None, text=None):
     curses_setup()
 
     f = Figlet(font=font)
@@ -176,15 +176,22 @@ def countdown(stdscr, time="0", font='univers', blink=False, text=None):
 
     if blink:
         flip = True
+        slept = 0
         while True:
             draw_blink(stdscr, flip)
             flip = not flip
             sleep(0.5)
+            slept += 0.5
+            if quit_after and slept >= float(quit_after):
+                return
 
     elif text:
         draw_text(stdscr, f.renderText(text))
-        while True:
-            sleep(47)
+        if quit_after:
+            sleep(int(quit_after))
+        else:
+            while True:
+                sleep(47)
 
 
 @click.command()
@@ -192,6 +199,8 @@ def countdown(stdscr, time="0", font='univers', blink=False, text=None):
               help="Flash terminal at end of countdown")
 @click.option("-f", "--font", default="univers", metavar="FONT",
               help="Choose from http://www.figlet.org/examples.html")
+@click.option("-q", "--quit-after", metavar="N",
+              help="Quit N seconds after countdown (use with -b or -t)")
 @click.option("-t", "--text",
               help="Text to display at end of countdown")
 @click.argument('time')
