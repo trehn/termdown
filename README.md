@@ -16,3 +16,7 @@ Options:
 ```
 pip install termdown
 ```
+
+------------------------------------------------------------------------
+
+![PyPI downloads](https://pypip.in/download/termdown/badge.png) &nbsp; ![PyPI version](https://pypip.in/version/termdown/badge.png) &nbsp; ![PyPI license](https://pypip.in/license/termdown/badge.png)
