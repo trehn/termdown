@@ -11,6 +11,8 @@ Options:
   -f, --font FONT     Choose from http://www.figlet.org/examples.html
   -q, --quit-after N  Quit N seconds after countdown (use with -b or -t)
   -t, --text TEXT     Text to display at end of countdown
+  -v, --voice VOICE   Mac OS X only: spoken countdown (starting at 10), choose
+                      VOICE from `say -v '?'`
 ```
 
 ```

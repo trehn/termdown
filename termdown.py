@@ -3,6 +3,7 @@ import curses
 from datetime import datetime, timedelta
 from math import ceil
 import re
+from subprocess import Popen
 from time import sleep
 
 import click
@@ -134,7 +135,8 @@ def parse_timedelta(deltastr):
 
 
 @graceful_ctrlc
-def countdown(stdscr, time="0", font='univers', blink=False, quit_after=None, text=None):
+def countdown(stdscr, time="0", font='univers', blink=False, quit_after=None, text=None,
+    voice=None):
     curses_setup()
 
     f = Figlet(font=font)
@@ -150,6 +152,8 @@ def countdown(stdscr, time="0", font='univers', blink=False, quit_after=None, te
             f.renderText(format_seconds(seconds_left)),
             color=1 if seconds_left <= 3 else 0,
         )
+        if seconds_left <= 10 and voice:
+            Popen(["/usr/bin/say", "-v", voice, str(seconds_left)])
 
         # We want to sleep until this point of time has been
         # reached:
@@ -203,6 +207,9 @@ def countdown(stdscr, time="0", font='univers', blink=False, quit_after=None, te
               help="Quit N seconds after countdown (use with -b or -t)")
 @click.option("-t", "--text",
               help="Text to display at end of countdown")
+@click.option("-v", "--voice", metavar="VOICE",
+              help="Mac OS X only: spoken countdown (starting at 10), "
+                   "choose VOICE from `say -v '?'`")
 @click.argument('time')
 def main(**kwargs):
     """
