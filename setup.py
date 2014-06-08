@@ -3,9 +3,11 @@ try:
 except ImportError:
     from distutils.core import setup
 
+import termdown
+
 setup(
     name="termdown",
-    version="1.1",
+    version=termdown.VERSION,
     description="Countdown timer for your terminal",
     author="Torsten Rehn",
     author_email="torsten@rehn.email",
@@ -22,7 +24,7 @@ setup(
         "Topic :: Utilities",
     ],
     install_requires=[
-        "click",
+        "click >= 2.0",
         "pyfiglet >= 0.7",
         "python-dateutil",
     ],

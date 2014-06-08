@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+VERSION = "1.1.0"
+
 import curses
 from datetime import datetime, timedelta
 from math import ceil
@@ -134,6 +136,13 @@ def parse_timedelta(deltastr):
     return int(timedelta(**components).total_seconds())
 
 
+def print_version(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    click.echo(VERSION)
+    ctx.exit()
+
+
 @graceful_ctrlc
 def countdown(stdscr, time="0", font='univers', blink=False, quit_after=None, text=None,
     voice=None):
@@ -210,6 +219,9 @@ def countdown(stdscr, time="0", font='univers', blink=False, quit_after=None, te
 @click.option("-v", "--voice", metavar="VOICE",
               help="Mac OS X only: spoken countdown (starting at 10), "
                    "choose VOICE from `say -v '?'`")
+@click.option("--version", is_flag=True, callback=print_version,
+              expose_value=False, is_eager=True,
+              help="Show version and exit")
 @click.argument('time')
 def main(**kwargs):
     """

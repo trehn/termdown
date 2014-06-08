@@ -13,6 +13,7 @@ Options:
   -t, --text TEXT     Text to display at end of countdown
   -v, --voice VOICE   Mac OS X only: spoken countdown (starting at 10), choose
                       VOICE from `say -v '?'`
+  --version           Show version and exit
 ```
 
 ```
