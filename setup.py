@@ -23,7 +23,7 @@ setup(
     ],
     install_requires=[
         "click",
-        "pyfiglet",
+        "pyfiglet >= 0.7",
         "python-dateutil",
     ],
     py_modules=['termdown'],
