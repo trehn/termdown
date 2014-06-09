@@ -12,6 +12,7 @@ import click
 from dateutil.parser import parse
 from pyfiglet import Figlet
 
+DEFAULT_FONT = "univers"
 TIMEDELTA_REGEX = re.compile(r'((?P<years>\d+)y ?)?'
                              r'((?P<days>\d+)d ?)?'
                              r'((?P<hours>\d+)h ?)?'
@@ -210,7 +211,7 @@ def countdown(stdscr, time="0", font='univers', blink=False, quit_after=None, te
 @click.command()
 @click.option("-b", "--blink", default=False, is_flag=True,
               help="Flash terminal at end of countdown")
-@click.option("-f", "--font", default="univers", metavar="FONT",
+@click.option("-f", "--font", default=DEFAULT_FONT, metavar="FONT",
               help="Choose from http://www.figlet.org/examples.html")
 @click.option("-q", "--quit-after", metavar="N",
               help="Quit N seconds after countdown (use with -b or -t)")
