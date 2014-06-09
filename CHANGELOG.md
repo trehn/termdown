@@ -1,3 +1,12 @@
+1.3.0
+=====
+
+2014-06-09
+
+* stopwatch mode
+* fixed formatting of 61 second display
+
+
 1.2.0
 =====
 
