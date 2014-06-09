@@ -145,13 +145,19 @@ def print_version(ctx, param, value):
 
 
 @graceful_ctrlc
-def countdown(stdscr, time="0", font='univers', blink=False, quit_after=None, text=None,
-    voice=None):
+def countdown(
+        stdscr,
+        sync_start,
+        target,
+        font=DEFAULT_FONT,
+        blink=False,
+        quit_after=None,
+        text=None,
+        voice=None,
+        **kwargs
+    ):
     curses_setup()
-
     f = Figlet(font=font)
-
-    sync_start, target = parse_timestr(time)
 
     seconds_left = int(ceil((target - datetime.now()).total_seconds()))
 
@@ -208,13 +214,34 @@ def countdown(stdscr, time="0", font='univers', blink=False, quit_after=None, te
                 sleep(47)
 
 
+@graceful_ctrlc
+def stopwatch(stdscr, font=DEFAULT_FONT, quit_after=None, **kwargs):
+    curses_setup()
+    f = Figlet(font=font)
+
+    sync_start = datetime.now()
+    seconds_elapsed = 0
+    while quit_after is None or seconds_elapsed < int(quit_after):
+        stdscr.erase()
+        draw_text(
+            stdscr,
+            f.renderText(format_seconds(seconds_elapsed)),
+        )
+        sleep_target = sync_start + timedelta(seconds=seconds_elapsed + 1)
+        now = datetime.now()
+        if sleep_target > now:
+            sleep((sleep_target - now).total_seconds())
+        seconds_elapsed = int((datetime.now() - sync_start).total_seconds())
+
+
 @click.command()
 @click.option("-b", "--blink", default=False, is_flag=True,
               help="Flash terminal at end of countdown")
 @click.option("-f", "--font", default=DEFAULT_FONT, metavar="FONT",
               help="Choose from http://www.figlet.org/examples.html")
 @click.option("-q", "--quit-after", metavar="N",
-              help="Quit N seconds after countdown (use with -b or -t)")
+              help="Quit N seconds after countdown (use with -b or -t) "
+                   "or terminate stopwatch after N seconds")
 @click.option("-t", "--text",
               help="Text to display at end of countdown")
 @click.option("-v", "--voice", metavar="VOICE",
@@ -223,14 +250,25 @@ def countdown(stdscr, time="0", font='univers', blink=False, quit_after=None, te
 @click.option("--version", is_flag=True, callback=print_version,
               expose_value=False, is_eager=True,
               help="Show version and exit")
-@click.argument('time')
+@click.argument('time', required=False)
 def main(**kwargs):
     """
     \b
     Starts a countdown to or from TIME. Example values for TIME:
     10, '1h 5m 30s', '12:00', '2020-01-01', '2020-01-01 14:00'.
+    \b
+    If TIME is not given, termdown will operate in stopwatch mode
+    and count forward.
     """
-    curses.wrapper(countdown, **kwargs)
+    if kwargs['time']:
+        try:
+            sync_start, target = parse_timestr(kwargs['time'])
+        except ValueError:
+            click.echo("Unable to parse TIME value '{}'".format(kwargs['time']))
+            exit(1)
+        curses.wrapper(countdown, sync_start, target, **kwargs)
+    else:
+        curses.wrapper(stopwatch, **kwargs)
 
 
 if __name__ == '__main__':
