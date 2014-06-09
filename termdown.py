@@ -57,7 +57,7 @@ def format_seconds(seconds):
         ('m', 60),
         ('s', 1),
     ):
-        if seconds > period_seconds:
+        if seconds >= period_seconds:
             output += str(int(seconds / period_seconds))
             output += period
             output += " "
