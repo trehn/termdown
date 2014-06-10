@@ -28,6 +28,10 @@ def curses_setup():
 
 
 def draw_blink(stdscr, flipflop):
+    """
+    Flash terminal. Must be called at desired intervals with flipflop
+    alternating between True and False.
+    """
     y, x = stdscr.getmaxyx()
     for i in range(y):
         if flipflop:
@@ -38,6 +42,9 @@ def draw_blink(stdscr, flipflop):
 
 
 def draw_text(stdscr, text, color=0):
+    """
+    Draws text in the given color. Duh.
+    """
     y, x = stdscr.getmaxyx()
     lines = pad_to_size(text, x-1, y-1).rstrip("\n").split("\n")
     i = 0
@@ -48,6 +55,10 @@ def draw_text(stdscr, text, color=0):
 
 
 def format_seconds(seconds):
+    """
+    Returns a human-readable string representation of the given amount
+    of seconds.
+    """
     if seconds <= 60:
         return str(seconds)
     output = ""
@@ -67,6 +78,9 @@ def format_seconds(seconds):
 
 
 def graceful_ctrlc(func):
+    """
+    Makes the decorated function terminate silently on CTRL+C.
+    """
     def wrapper(*args, **kwargs):
         try:
             func(*args, **kwargs)
@@ -76,6 +90,10 @@ def graceful_ctrlc(func):
 
 
 def pad_to_size(text, x, y):
+    """
+    Adds whitespace to text to center it within a frame of the given
+    dimensions.
+    """
     input_lines = text.rstrip().split("\n")
     longest_input_line = max(map(len, input_lines))
     number_of_input_lines = len(input_lines)
@@ -96,6 +114,9 @@ def pad_to_size(text, x, y):
 
 
 def parse_timestr(timestr):
+    """
+    Parse a string describing a point in time.
+    """
     timedelta_secs = parse_timedelta(timestr)
     sync_start = datetime.now()
 
@@ -122,6 +143,9 @@ def parse_timestr(timestr):
 
 
 def parse_timedelta(deltastr):
+    """
+    Parse a string describing a period of time.
+    """
     matches = TIMEDELTA_REGEX.match(deltastr)
     if not matches:
         return None
