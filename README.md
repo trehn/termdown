@@ -17,6 +17,7 @@ Options:
   -t, --text TEXT     Text to display at end of countdown
   -v, --voice VOICE   Mac OS X only: spoken countdown (starting at 10), choose
                       VOICE from `say -v '?'`
+  --no-text-magic     Don't try to replace non-ASCII characters (use with -t)
   --version           Show version and exit
   --help              Show this message and exit
 ```

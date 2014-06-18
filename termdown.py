@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 VERSION = "1.3.0"
 
 import curses
@@ -7,6 +10,7 @@ from math import ceil
 import re
 from subprocess import Popen
 from time import sleep
+import unicodedata
 
 import click
 from dateutil.parser import parse
@@ -87,6 +91,26 @@ def graceful_ctrlc(func):
         except KeyboardInterrupt:
             pass
     return wrapper
+
+
+NORMALIZE_TEXT_MAP = {
+    "ä": "ae",
+    "Ä": "Ae",
+    "ö": "oe",
+    "Ö": "Oe",
+    "ü": "ue",
+    "Ü": "Ue",
+    "ß": "ss",
+}
+
+
+def normalize_text(input_str):
+    for char, replacement in NORMALIZE_TEXT_MAP.items():
+        input_str = input_str.replace(char, replacement)
+    return "".join(
+        [c for c in unicodedata.normalize('NFD', input_str) if
+         unicodedata.category(c) != 'Mn']
+    )
 
 
 def pad_to_size(text, x, y):
@@ -178,6 +202,7 @@ def countdown(
         quit_after=None,
         text=None,
         voice=None,
+        no_text_magic=True,
         **kwargs
     ):
     curses_setup()
@@ -230,6 +255,8 @@ def countdown(
                 return
 
     elif text:
+        if not no_text_magic:
+            text = normalize_text(text)
         draw_text(stdscr, f.renderText(text))
         if quit_after:
             sleep(int(quit_after))
@@ -271,6 +298,8 @@ def stopwatch(stdscr, font=DEFAULT_FONT, quit_after=None, **kwargs):
 @click.option("-v", "--voice", metavar="VOICE",
               help="Mac OS X only: spoken countdown (starting at 10), "
                    "choose VOICE from `say -v '?'`")
+@click.option("--no-text-magic", default=False, is_flag=True,
+              help="Don't try to replace non-ASCII characters (use with -t)")
 @click.option("--version", is_flag=True, callback=print_version,
               expose_value=False, is_eager=True,
               help="Show version and exit")
