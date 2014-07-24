@@ -1,3 +1,11 @@
+1.4.0
+=====
+
+2014-07-24
+
+* deal with non-ASCII characters
+
+
 1.3.0
 =====
 
