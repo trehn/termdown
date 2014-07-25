@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from math import ceil
 import re
 from subprocess import Popen
+from sys import exit
 from time import sleep
 import unicodedata
 
@@ -318,7 +319,7 @@ def main(**kwargs):
             sync_start, target = parse_timestr(kwargs['time'])
         except ValueError:
             click.echo("Unable to parse TIME value '{}'".format(kwargs['time']))
-            exit(1)
+            exit(64)
         curses.wrapper(countdown, sync_start, target, **kwargs)
     else:
         curses.wrapper(stopwatch, **kwargs)
