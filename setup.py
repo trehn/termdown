@@ -3,11 +3,9 @@ try:
 except ImportError:
     from distutils.core import setup
 
-import termdown
-
 setup(
     name="termdown",
-    version=termdown.VERSION,
+    version="1.5.0",
     description="Countdown timer for your terminal",
     author="Torsten Rehn",
     author_email="torsten@rehn.email",
