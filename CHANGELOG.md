@@ -1,3 +1,12 @@
+1.5.0
+=====
+
+2014-08-05
+
+* --no-seconds
+* fixed import error in setup.py
+
+
 1.4.0
 =====
 
