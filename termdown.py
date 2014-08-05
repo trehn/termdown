@@ -59,7 +59,7 @@ def draw_text(stdscr, text, color=0):
     stdscr.refresh()
 
 
-def format_seconds(seconds):
+def format_seconds(seconds, hide_seconds=False):
     """
     Returns a human-readable string representation of the given amount
     of seconds.
@@ -74,7 +74,7 @@ def format_seconds(seconds):
         ('m', 60),
         ('s', 1),
     ):
-        if seconds >= period_seconds:
+        if seconds >= period_seconds and not (hide_seconds and period == 's'):
             output += str(int(seconds / period_seconds))
             output += period
             output += " "
@@ -203,6 +203,7 @@ def countdown(
         quit_after=None,
         text=None,
         voice=None,
+        no_seconds=False,
         no_text_magic=True,
         **kwargs
     ):
@@ -215,7 +216,7 @@ def countdown(
         stdscr.erase()
         draw_text(
             stdscr,
-            f.renderText(format_seconds(seconds_left)),
+            f.renderText(format_seconds(seconds_left, hide_seconds=no_seconds)),
             color=1 if seconds_left <= 3 else 0,
         )
         if seconds_left <= 10 and voice:
@@ -267,7 +268,7 @@ def countdown(
 
 
 @graceful_ctrlc
-def stopwatch(stdscr, font=DEFAULT_FONT, quit_after=None, **kwargs):
+def stopwatch(stdscr, font=DEFAULT_FONT, no_seconds=False, quit_after=None, **kwargs):
     curses_setup()
     f = Figlet(font=font)
 
@@ -277,7 +278,7 @@ def stopwatch(stdscr, font=DEFAULT_FONT, quit_after=None, **kwargs):
         stdscr.erase()
         draw_text(
             stdscr,
-            f.renderText(format_seconds(seconds_elapsed)),
+            f.renderText(format_seconds(seconds_elapsed, hide_seconds=no_seconds)),
         )
         sleep_target = sync_start + timedelta(seconds=seconds_elapsed + 1)
         now = datetime.now()
@@ -294,6 +295,8 @@ def stopwatch(stdscr, font=DEFAULT_FONT, quit_after=None, **kwargs):
 @click.option("-q", "--quit-after", metavar="N",
               help="Quit N seconds after countdown (use with -b or -t) "
                    "or terminate stopwatch after N seconds")
+@click.option("-s", "--no-seconds", default=False, is_flag=True,
+              help="Don't show seconds until last minute")
 @click.option("-t", "--text",
               help="Text to display at end of countdown")
 @click.option("-v", "--voice", metavar="VOICE",
