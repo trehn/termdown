@@ -205,6 +205,7 @@ def countdown(
         voice=None,
         no_seconds=False,
         no_text_magic=True,
+        no_figlet=False,
         **kwargs
     ):
     curses_setup()
@@ -214,9 +215,10 @@ def countdown(
 
     while seconds_left > 0:
         stdscr.erase()
+        countdown_text = format_seconds(seconds_left, hide_seconds=no_seconds)
         draw_text(
             stdscr,
-            f.renderText(format_seconds(seconds_left, hide_seconds=no_seconds)),
+            countdown_text if no_figlet else f.renderText(countdown_text),
             color=1 if seconds_left <= 3 else 0,
         )
         if seconds_left <= 10 and voice:
@@ -259,7 +261,7 @@ def countdown(
     elif text:
         if not no_text_magic:
             text = normalize_text(text)
-        draw_text(stdscr, f.renderText(text))
+        draw_text(stdscr, text if no_figlet else f.renderText(text))
         if quit_after:
             sleep(int(quit_after))
         else:
@@ -268,7 +270,14 @@ def countdown(
 
 
 @graceful_ctrlc
-def stopwatch(stdscr, font=DEFAULT_FONT, no_seconds=False, quit_after=None, **kwargs):
+def stopwatch(
+    stdscr,
+    font=DEFAULT_FONT,
+    no_seconds=False,
+    quit_after=None,
+    no_figlet=False,
+    **kwargs
+):
     curses_setup()
     f = Figlet(font=font)
 
@@ -276,9 +285,10 @@ def stopwatch(stdscr, font=DEFAULT_FONT, no_seconds=False, quit_after=None, **kw
     seconds_elapsed = 0
     while quit_after is None or seconds_elapsed < int(quit_after):
         stdscr.erase()
+        countdown_text = format_seconds(seconds_elapsed, hide_seconds=no_seconds)
         draw_text(
             stdscr,
-            f.renderText(format_seconds(seconds_elapsed, hide_seconds=no_seconds)),
+            countdown_text if no_figlet else f.renderText(countdown_text),
         )
         sleep_target = sync_start + timedelta(seconds=seconds_elapsed + 1)
         now = datetime.now()
@@ -302,6 +312,8 @@ def stopwatch(stdscr, font=DEFAULT_FONT, no_seconds=False, quit_after=None, **kw
 @click.option("-v", "--voice", metavar="VOICE",
               help="Mac OS X only: spoken countdown (starting at 10), "
                    "choose VOICE from `say -v '?'`")
+@click.option("--no-figlet", default=False, is_flag=True,
+              help="Don't use ASCII art for display")
 @click.option("--no-text-magic", default=False, is_flag=True,
               help="Don't try to replace non-ASCII characters (use with -t)")
 @click.option("--version", is_flag=True, callback=print_version,
