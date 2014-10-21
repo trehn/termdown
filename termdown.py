@@ -212,77 +212,158 @@ def print_version(ctx, param, value):
 @graceful_ctrlc
 def countdown(
         stdscr,
-        sync_start,
-        target,
         font=DEFAULT_FONT,
         blink=False,
         quit_after=None,
         text=None,
+        timespec=None,
         voice=None,
         no_seconds=False,
         no_text_magic=True,
         no_figlet=False,
         **kwargs
     ):
-    setup(stdscr)
-    f = Figlet(font=font)
+    try:
+        sync_start, target = parse_timestr(timespec)
+    except ValueError:
+        click.echo("Unable to parse TIME value '{}'".format(timespec))
+        exit(64)
+    curses_lock, input_queue, quit_event = setup(stdscr)
+    figlet = Figlet(font=font)
+    input_thread = Thread(
+        args=(stdscr, input_queue, quit_event, curses_lock),
+        target=input_thread_body,
+    )
+    input_thread.start()
 
     seconds_left = int(ceil((target - datetime.now()).total_seconds()))
 
-    while seconds_left > 0:
-        stdscr.erase()
-        countdown_text = format_seconds(seconds_left, hide_seconds=no_seconds)
-        draw_text(
-            stdscr,
-            countdown_text if no_figlet else f.renderText(countdown_text),
-            color=1 if seconds_left <= 3 else 0,
-        )
-        if seconds_left <= 10 and voice:
-            Popen(["/usr/bin/say", "-v", voice, str(seconds_left)])
+    try:
+        while seconds_left > 0:
+            countdown_text = format_seconds(seconds_left, hide_seconds=no_seconds)
+            with curses_lock:
+                stdscr.erase()
+                draw_text(
+                    stdscr,
+                    countdown_text if no_figlet else figlet.renderText(countdown_text),
+                    color=1 if seconds_left <= 3 else 0,
+                )
+            if seconds_left <= 10 and voice:
+                Popen(["/usr/bin/say", "-v", voice, str(seconds_left)])
 
-        # We want to sleep until this point of time has been
-        # reached:
-        sleep_target = sync_start + timedelta(seconds=1)
+            # We want to sleep until this point of time has been
+            # reached:
+            sleep_target = sync_start + timedelta(seconds=1)
 
-        # If sync_start has microsecond=0, it might happen that we
-        # need to skip one frame (the very first one). This occurs
-        # when the program has been startet at, say,
-        # "2014-05-29 20:27:57.930651". Now suppose rendering the
-        # frame took about 0.2 seconds. The real time now is
-        # "2014-05-29 20:27:58.130000" and sleep_target is
-        # "2014-05-29 20:27:58.000000" which is in the past! We're
-        # already too late. We could either skip that frame
-        # completely or we can draw it right now. I chose to do the
-        # latter: Only sleep if haven't already missed our target.
-        now = datetime.now()
-        if sleep_target > now:
-            sleep((sleep_target - now).total_seconds())
-        sync_start = sleep_target
+            # If sync_start has microsecond=0, it might happen that we
+            # need to skip one frame (the very first one). This occurs
+            # when the program has been startet at, say,
+            # "2014-05-29 20:27:57.930651". Now suppose rendering the
+            # frame took about 0.2 seconds. The real time now is
+            # "2014-05-29 20:27:58.130000" and sleep_target is
+            # "2014-05-29 20:27:58.000000" which is in the past! We're
+            # already too late. We could either skip that frame
+            # completely or we can draw it right now. I chose to do the
+            # latter: Only sleep if haven't already missed our target.
+            now = datetime.now()
+            if sleep_target > now:
+                try:
+                    input_action = input_queue.get(True, (sleep_target - now).total_seconds())
+                except Empty:
+                    input_action = None
+                if input_action == INPUT_PAUSE:
+                    pause_start = datetime.now()
+                    input_action = input_queue.get()
+                    if input_action == INPUT_PAUSE:
+                        sync_start += (datetime.now() - pause_start)
+                        target += (datetime.now() - pause_start)
+                if input_action == INPUT_EXIT:  # no elif here! input_action may have changed
+                    break
+                elif input_action == INPUT_RESET:
+                    sync_start, target = parse_timestr(timespec)
+                    seconds_left = int(ceil((target - datetime.now()).total_seconds()))
+                    continue
 
-        seconds_left = int(ceil((target - datetime.now()).total_seconds()))
+            sync_start = sleep_target
 
-    curses.beep()
+            seconds_left = int(ceil((target - datetime.now()).total_seconds()))
 
-    if blink:
-        flip = True
-        slept = 0
-        while True:
-            draw_blink(stdscr, flip)
-            flip = not flip
-            sleep(0.5)
-            slept += 0.5
-            if quit_after and slept >= float(quit_after):
-                return
+            if seconds_left <= 0:
+                # we could write this entire block outside the parent while
+                # but that would leave us unable to reset everything
 
-    elif text:
-        if not no_text_magic:
-            text = normalize_text(text)
-        draw_text(stdscr, text if no_figlet else f.renderText(text))
-        if quit_after:
-            sleep(int(quit_after))
-        else:
-            while True:
-                sleep(47)
+                with curses_lock:
+                    curses.beep()
+
+                if blink:
+                    blink_reset = False
+                    flip = True
+                    slept = 0
+                    extra_sleep = 0
+                    while True:
+                        with curses_lock:
+                            draw_blink(stdscr, flip)
+                        flip = not flip
+                        try:
+                            sleep_start = datetime.now()
+                            input_action = input_queue.get(True, 0.5 + extra_sleep)
+                        except Empty:
+                            input_action = None
+                        finally:
+                            extra_sleep = 0
+                            sleep_end = datetime.now()
+                        if input_action == INPUT_PAUSE:
+                            pause_start = datetime.now()
+                            input_action = input_queue.get()
+                            extra_sleep = (sleep_end - sleep_start).total_seconds()
+                        if input_action == INPUT_EXIT:
+                            # no elif here! input_action may have changed
+                            return
+                        elif input_action == INPUT_RESET:
+                            sync_start, target = parse_timestr(timespec)
+                            seconds_left = int(ceil((target - datetime.now()).total_seconds()))
+                            blink_reset = True
+                            break
+                        slept += (sleep_end - sleep_start).total_seconds()
+                        if quit_after and slept >= float(quit_after):
+                            return
+                    if blink_reset:
+                        continue
+
+                elif text:
+                    if not no_text_magic:
+                        text = normalize_text(text)
+                    with curses_lock:
+                        draw_text(stdscr, text if no_figlet else figlet.renderText(text))
+
+                    text_reset = False
+                    slept = 0
+                    while True:
+                        try:
+                            sleep_start = datetime.now()
+                            if quit_after:
+                                input_action = input_queue.get(True, int(quit_after))
+                            else:
+                                input_action = input_queue.get(True, 47)
+                        except Empty:
+                            input_action = None
+                        finally:
+                            sleep_end = datetime.now()
+                        if input_action == INPUT_EXIT:
+                            return
+                        elif input_action == INPUT_RESET:
+                            sync_start, target = parse_timestr(timespec)
+                            seconds_left = int(ceil((target - datetime.now()).total_seconds()))
+                            text_reset = True
+                            break
+                        slept += (sleep_end - sleep_start).total_seconds()
+                        if quit_after and slept >= float(quit_after):
+                            return
+                    if text_reset:
+                        continue
+    finally:
+        quit_event.set()
+        input_thread.join()
 
 
 @graceful_ctrlc
@@ -374,23 +455,23 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 @click.option("--version", is_flag=True, callback=print_version,
               expose_value=False, is_eager=True,
               help="Show version and exit")
-@click.argument('time', required=False)
+@click.argument('timespec', required=False)
 def main(**kwargs):
     """
     \b
-    Starts a countdown to or from TIME. Example values for TIME:
+    Starts a countdown to or from TIMESPEC. Example values for TIMESPEC:
     10, '1h 5m 30s', '12:00', '2020-01-01', '2020-01-01 14:00'.
     \b
-    If TIME is not given, termdown will operate in stopwatch mode
+    If TIMESPEC is not given, termdown will operate in stopwatch mode
     and count forward.
+    \b
+    Hotkeys:
+    \tR\tReset
+    \tSPACE\tPause (will delay absolute TIMESPEC)
+    \tQ\tQuit
     """
-    if kwargs['time']:
-        try:
-            sync_start, target = parse_timestr(kwargs['time'])
-        except ValueError:
-            click.echo("Unable to parse TIME value '{}'".format(kwargs['time']))
-            exit(64)
-        curses.wrapper(countdown, sync_start, target, **kwargs)
+    if kwargs['timespec']:
+        curses.wrapper(countdown, **kwargs)
     else:
         curses.wrapper(stopwatch, **kwargs)
 
