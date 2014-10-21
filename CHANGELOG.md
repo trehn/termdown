@@ -1,3 +1,12 @@
+1.6.0
+=====
+
+2014-10-21
+
+* added hotkeys
+* added --no-figlet
+
+
 1.5.0
 =====
 
