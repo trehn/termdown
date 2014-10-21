@@ -16,6 +16,7 @@ Usage: termdown [OPTIONS] [TIMESPEC]
 
 Options:
   -b, --blink         Flash terminal at end of countdown
+  -c, --critical N    Draw final N seconds in red (defaults to 3)
   -f, --font FONT     Choose from http://www.figlet.org/examples.html
   -q, --quit-after N  Quit N seconds after countdown (use with -b or -t) or
                       terminate stopwatch after N seconds

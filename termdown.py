@@ -215,6 +215,7 @@ def countdown(
         stdscr,
         font=DEFAULT_FONT,
         blink=False,
+        critical=3,
         quit_after=None,
         text=None,
         timespec=None,
@@ -247,7 +248,7 @@ def countdown(
                 draw_text(
                     stdscr,
                     countdown_text if no_figlet else figlet.renderText(countdown_text),
-                    color=1 if seconds_left <= 3 else 0,
+                    color=1 if seconds_left <= critical else 0,
                 )
             if seconds_left <= 10 and voice:
                 Popen(["/usr/bin/say", "-v", voice, str(seconds_left)])
@@ -451,6 +452,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 @click.command()
 @click.option("-b", "--blink", default=False, is_flag=True,
               help="Flash terminal at end of countdown")
+@click.option("-c", "--critical", default=3, metavar="N",
+              help="Draw final N seconds in red (defaults to 3)")
 @click.option("-f", "--font", default=DEFAULT_FONT, metavar="FONT",
               help="Choose from http://www.figlet.org/examples.html")
 @click.option("-q", "--quit-after", metavar="N",
