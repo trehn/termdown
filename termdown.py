@@ -7,9 +7,14 @@ VERSION = "1.5.0"
 import curses
 from datetime import datetime, timedelta
 from math import ceil
+try:
+    from queue import Empty, Queue
+except ImportError:
+    from Queue import Empty, Queue
 import re
 from subprocess import Popen
 from sys import exit
+from threading import Event, Lock, Thread
 from time import sleep
 import unicodedata
 
@@ -23,13 +28,24 @@ TIMEDELTA_REGEX = re.compile(r'((?P<years>\d+)y ?)?'
                              r'((?P<hours>\d+)h ?)?'
                              r'((?P<minutes>\d+)m ?)?'
                              r'((?P<seconds>\d+)s ?)?')
+INPUT_PAUSE = 1
+INPUT_RESET = 2
+INPUT_EXIT = 3
 
 
-def curses_setup():
+def setup(stdscr):
+    # curses
     curses.use_default_colors()
     curses.init_pair(1, curses.COLOR_RED, -1)
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_RED)
     curses.curs_set(False)
+    stdscr.timeout(0)
+
+    # prepare input thread mechanisms
+    curses_lock = Lock()
+    input_queue = Queue()
+    quit_event = Event()
+    return (curses_lock, input_queue, quit_event)
 
 
 def draw_blink(stdscr, flipflop):
@@ -208,7 +224,7 @@ def countdown(
         no_figlet=False,
         **kwargs
     ):
-    curses_setup()
+    setup(stdscr)
     f = Figlet(font=font)
 
     seconds_left = int(ceil((target - datetime.now()).total_seconds()))
@@ -278,23 +294,62 @@ def stopwatch(
     no_figlet=False,
     **kwargs
 ):
-    curses_setup()
-    f = Figlet(font=font)
+    curses_lock, input_queue, quit_event = setup(stdscr)
+    figlet = Figlet(font=font)
+    input_thread = Thread(
+        args=(stdscr, input_queue, quit_event, curses_lock),
+        target=input_thread_body,
+    )
+    input_thread.start()
 
-    sync_start = datetime.now()
-    seconds_elapsed = 0
-    while quit_after is None or seconds_elapsed < int(quit_after):
-        stdscr.erase()
-        countdown_text = format_seconds(seconds_elapsed, hide_seconds=no_seconds)
-        draw_text(
-            stdscr,
-            countdown_text if no_figlet else f.renderText(countdown_text),
-        )
-        sleep_target = sync_start + timedelta(seconds=seconds_elapsed + 1)
-        now = datetime.now()
-        if sleep_target > now:
-            sleep((sleep_target - now).total_seconds())
-        seconds_elapsed = int((datetime.now() - sync_start).total_seconds())
+    try:
+        sync_start = datetime.now()
+        seconds_elapsed = 0
+        while quit_after is None or seconds_elapsed < int(quit_after):
+            countdown_text = format_seconds(seconds_elapsed, hide_seconds=no_seconds)
+            with curses_lock:
+                stdscr.erase()
+                draw_text(
+                    stdscr,
+                    countdown_text if no_figlet else figlet.renderText(countdown_text),
+                )
+            sleep_target = sync_start + timedelta(seconds=seconds_elapsed + 1)
+            now = datetime.now()
+            if sleep_target > now:
+                try:
+                    input_action = input_queue.get(True, (sleep_target - now).total_seconds())
+                except Empty:
+                    input_action = None
+                if input_action == INPUT_PAUSE:
+                    pause_start = datetime.now()
+                    input_action = input_queue.get()
+                    if input_action == INPUT_PAUSE:
+                        sync_start += (datetime.now() - pause_start)
+                if input_action == INPUT_EXIT:  # no elif here! input_action may have changed
+                    break
+                elif input_action == INPUT_RESET:
+                    sync_start = datetime.now()
+                    seconds_elapsed = 0
+            seconds_elapsed = int((datetime.now() - sync_start).total_seconds())
+    finally:
+        quit_event.set()
+        input_thread.join()
+
+
+def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
+    while not quit_event.is_set():
+        try:
+            with curses_lock:
+                key = stdscr.getkey()
+        except:
+            key = None
+        if key == "q":
+            input_queue.put(INPUT_EXIT)
+        elif key == " ":
+            input_queue.put(INPUT_PAUSE)
+        elif key == "r":
+            input_queue.put(INPUT_RESET)
+        sleep(0.01)
 
 
 @click.command()
