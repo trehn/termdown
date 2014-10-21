@@ -38,6 +38,7 @@ def setup(stdscr):
     curses.use_default_colors()
     curses.init_pair(1, curses.COLOR_RED, -1)
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_RED)
+    curses.init_pair(3, curses.COLOR_GREEN, -1)
     curses.curs_set(False)
     stdscr.timeout(0)
 
@@ -273,6 +274,13 @@ def countdown(
                     input_action = None
                 if input_action == INPUT_PAUSE:
                     pause_start = datetime.now()
+                    with curses_lock:
+                        stdscr.erase()
+                        draw_text(
+                            stdscr,
+                            countdown_text if no_figlet else figlet.renderText(countdown_text),
+                            color=3,
+                        )
                     input_action = input_queue.get()
                     if input_action == INPUT_PAUSE:
                         sync_start += (datetime.now() - pause_start)
@@ -403,6 +411,13 @@ def stopwatch(
                     input_action = None
                 if input_action == INPUT_PAUSE:
                     pause_start = datetime.now()
+                    with curses_lock:
+                        stdscr.erase()
+                        draw_text(
+                            stdscr,
+                            countdown_text if no_figlet else figlet.renderText(countdown_text),
+                            color=3,
+                        )
                     input_action = input_queue.get()
                     if input_action == INPUT_PAUSE:
                         sync_start += (datetime.now() - pause_start)
