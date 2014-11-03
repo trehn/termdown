@@ -1,3 +1,14 @@
+1.7.0
+=====
+
+2014-11-03
+
+* added --critical
+* hotkeys are now case-insensitive
+* stopwatch mode will print elapsed time on exit
+* draw counter in green while paused
+
+
 1.6.0
 =====
 
