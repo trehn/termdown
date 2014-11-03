@@ -450,11 +450,11 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
                 key = stdscr.getkey()
         except:
             key = None
-        if key == "q":
+        if key in ("q", "Q"):
             input_queue.put(INPUT_EXIT)
         elif key == " ":
             input_queue.put(INPUT_PAUSE)
-        elif key == "r":
+        elif key in ("r", "R"):
             input_queue.put(INPUT_RESET)
         sleep(0.01)
 
