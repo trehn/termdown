@@ -49,6 +49,15 @@ def setup(stdscr):
     return (curses_lock, input_queue, quit_event)
 
 
+class CursesReturnValue(Exception):
+    """
+    curses.wrapper() does not provide the return value of the called
+    function, so we use this hack to pass something through.
+    """
+    def __init__(self, value):
+        self.value = value
+
+
 def draw_blink(stdscr, flipflop):
     """
     Flash terminal. Must be called at desired intervals with flipflop
@@ -431,6 +440,7 @@ def stopwatch(
     finally:
         quit_event.set()
         input_thread.join()
+        raise CursesReturnValue((datetime.now() - sync_start).total_seconds())
 
 
 def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
@@ -491,7 +501,10 @@ def main(**kwargs):
     if kwargs['timespec']:
         curses.wrapper(countdown, **kwargs)
     else:
-        curses.wrapper(stopwatch, **kwargs)
+        try:
+            curses.wrapper(stopwatch, **kwargs)
+        except CursesReturnValue as e:
+            print("{}\t{}".format(e.value, format_seconds(int(e.value))))
 
 
 if __name__ == '__main__':
