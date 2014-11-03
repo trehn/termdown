@@ -504,7 +504,7 @@ def main(**kwargs):
         try:
             curses.wrapper(stopwatch, **kwargs)
         except CursesReturnValue as e:
-            print("{}\t{}".format(e.value, format_seconds(int(e.value))))
+            print("{:.3f}\t{}".format(e.value, format_seconds(int(e.value))))
 
 
 if __name__ == '__main__':
