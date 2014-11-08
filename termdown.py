@@ -13,7 +13,7 @@ except ImportError:
     from Queue import Empty, Queue
 import re
 from subprocess import Popen
-from sys import exit
+from sys import exit, stderr
 from threading import Event, Lock, Thread
 from time import sleep
 import unicodedata
@@ -504,7 +504,8 @@ def main(**kwargs):
         try:
             curses.wrapper(stopwatch, **kwargs)
         except CursesReturnValue as e:
-            print("{:.3f}\t{}".format(e.value, format_seconds(int(e.value))))
+            stderr.write("{:.3f}\t{}\n".format(e.value, format_seconds(int(e.value))))
+            stderr.flush()
 
 
 if __name__ == '__main__':
