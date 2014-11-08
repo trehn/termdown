@@ -1,3 +1,11 @@
+1.7.1
+=====
+
+2014-11-08
+
+* stopwatch mode now prints elapsed time to stderr instead of stdout
+
+
 1.7.0
 =====
 

@@ -5,7 +5,7 @@ except ImportError:
 
 setup(
     name="termdown",
-    version="1.7.0",
+    version="1.7.1",
     description="Countdown timer for your terminal",
     author="Torsten Rehn",
     author_email="torsten@rehn.email",
