@@ -59,20 +59,6 @@ class CursesReturnValue(Exception):
         self.value = value
 
 
-def draw_blink(stdscr, flipflop):
-    """
-    Flash terminal. Must be called at desired intervals with flipflop
-    alternating between True and False.
-    """
-    y, x = stdscr.getmaxyx()
-    for i in range(y):
-        if flipflop:
-            stdscr.addstr(i, 0, " " * (x-1), curses.color_pair(2))
-        else:
-            stdscr.addstr(i, 0, " " * (x-1))
-    stdscr.refresh()
-
-
 def draw_text(stdscr, text, color=0):
     """
     Draws text in the given color. Duh.
@@ -327,7 +313,7 @@ def countdown(
                             if text:
                                 draw_text(stdscr, text if no_figlet else figlet.renderText(text), color=1 if flip else 4)
                             else:
-                                draw_blink(stdscr, flip)
+                                draw_text(stdscr, "", color=1 if flip else 4)
                         flip = not flip
                         try:
                             sleep_start = datetime.now()
