@@ -39,6 +39,7 @@ def setup(stdscr):
     curses.init_pair(1, curses.COLOR_RED, -1)
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_RED)
     curses.init_pair(3, curses.COLOR_GREEN, -1)
+    curses.init_pair(4, -1, curses.COLOR_RED)
     curses.curs_set(False)
     stdscr.timeout(0)
 
@@ -156,10 +157,10 @@ def pad_to_size(text, x, y):
     padding_bottom = y - number_of_input_lines - padding_top
     padding_left = int((x - longest_input_line) / 2)
 
-    output += padding_top * "\n"
+    output += padding_top * (" " * x + "\n")
     for line in input_lines:
-        output += padding_left * " " + line + "\n"
-    output += padding_bottom * "\n"
+        output += padding_left * " " + line + " " * (x - padding_left - len(line)) + "\n"
+    output += padding_bottom * (" " * x + "\n")
 
     return output
 
@@ -313,6 +314,9 @@ def countdown(
                 with curses_lock:
                     curses.beep()
 
+                if text and not no_text_magic:
+                    text = normalize_text(text)
+
                 if blink:
                     blink_reset = False
                     flip = True
@@ -320,7 +324,10 @@ def countdown(
                     extra_sleep = 0
                     while True:
                         with curses_lock:
-                            draw_blink(stdscr, flip)
+                            if text:
+                                draw_text(stdscr, text if no_figlet else figlet.renderText(text), color=1 if flip else 4)
+                            else:
+                                draw_blink(stdscr, flip)
                         flip = not flip
                         try:
                             sleep_start = datetime.now()
@@ -349,8 +356,6 @@ def countdown(
                         continue
 
                 elif text:
-                    if not no_text_magic:
-                        text = normalize_text(text)
                     with curses_lock:
                         draw_text(stdscr, text if no_figlet else figlet.renderText(text))
 
