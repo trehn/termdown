@@ -302,6 +302,8 @@ def countdown(
 
                 if text and not no_text_magic:
                     text = normalize_text(text)
+                if text and not no_figlet:
+                    text = figlet.renderText(text)
 
                 if blink:
                     blink_reset = False
@@ -311,7 +313,7 @@ def countdown(
                     while True:
                         with curses_lock:
                             if text:
-                                draw_text(stdscr, text if no_figlet else figlet.renderText(text), color=1 if flip else 4)
+                                draw_text(stdscr, text, color=1 if flip else 4)
                             else:
                                 draw_text(stdscr, "", color=1 if flip else 4)
                         flip = not flip
@@ -343,7 +345,7 @@ def countdown(
 
                 elif text:
                     with curses_lock:
-                        draw_text(stdscr, text if no_figlet else figlet.renderText(text))
+                        draw_text(stdscr, text)
 
                     text_reset = False
                     slept = 0
