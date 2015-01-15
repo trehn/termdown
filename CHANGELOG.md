@@ -1,3 +1,12 @@
+1.7.2
+=====
+
+2015-01-15
+
+* ``--blink`` and ``--text`` can now be combined
+* ``termdown --blink 0`` will now blink instead of exiting
+
+
 1.7.1
 =====
 
