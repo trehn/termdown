@@ -237,15 +237,16 @@ def countdown(
     seconds_left = int(ceil((target - datetime.now()).total_seconds()))
 
     try:
-        while seconds_left > 0:
+        while seconds_left > 0 or blink or text:
             countdown_text = format_seconds(seconds_left, hide_seconds=no_seconds)
-            with curses_lock:
-                stdscr.erase()
-                draw_text(
-                    stdscr,
-                    countdown_text if no_figlet else figlet.renderText(countdown_text),
-                    color=1 if seconds_left <= critical else 0,
-                )
+            if seconds_left > 0:
+                with curses_lock:
+                    stdscr.erase()
+                    draw_text(
+                        stdscr,
+                        countdown_text if no_figlet else figlet.renderText(countdown_text),
+                        color=1 if seconds_left <= critical else 0,
+                    )
             if seconds_left <= 10 and voice:
                 Popen(["/usr/bin/say", "-v", voice, str(seconds_left)])
 
@@ -264,7 +265,7 @@ def countdown(
             # completely or we can draw it right now. I chose to do the
             # latter: Only sleep if haven't already missed our target.
             now = datetime.now()
-            if sleep_target > now:
+            if sleep_target > now and seconds_left > 0:
                 try:
                     input_action = input_queue.get(True, (sleep_target - now).total_seconds())
                 except Empty:
