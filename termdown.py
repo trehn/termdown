@@ -312,7 +312,8 @@ def countdown(
                 if text and not no_figlet:
                     text = figlet.renderText(text)
 
-                if blink:
+                if blink or text:
+                    base_color = 1 if blink else 0
                     blink_reset = False
                     flip = True
                     slept = 0
@@ -320,10 +321,11 @@ def countdown(
                     while True:
                         with curses_lock:
                             if text:
-                                draw_text(stdscr, text, color=1 if flip else 4)
+                                draw_text(stdscr, text, color=base_color if flip else 4)
                             else:
-                                draw_text(stdscr, "", color=1 if flip else 4)
-                        flip = not flip
+                                draw_text(stdscr, "", color=base_color if flip else 4)
+                        if blink:
+                            flip = not flip
                         try:
                             sleep_start = datetime.now()
                             input_action = input_queue.get(True, 0.5 + extra_sleep)
@@ -348,36 +350,6 @@ def countdown(
                         if quit_after and slept >= float(quit_after):
                             return
                     if blink_reset:
-                        continue
-
-                elif text:
-                    with curses_lock:
-                        draw_text(stdscr, text)
-
-                    text_reset = False
-                    slept = 0
-                    while True:
-                        try:
-                            sleep_start = datetime.now()
-                            if quit_after:
-                                input_action = input_queue.get(True, int(quit_after))
-                            else:
-                                input_action = input_queue.get(True, 47)
-                        except Empty:
-                            input_action = None
-                        finally:
-                            sleep_end = datetime.now()
-                        if input_action == INPUT_EXIT:
-                            return
-                        elif input_action == INPUT_RESET:
-                            sync_start, target = parse_timestr(timespec)
-                            seconds_left = int(ceil((target - datetime.now()).total_seconds()))
-                            text_reset = True
-                            break
-                        slept += (sleep_end - sleep_start).total_seconds()
-                        if quit_after and slept >= float(quit_after):
-                            return
-                    if text_reset:
                         continue
     finally:
         quit_event.set()
