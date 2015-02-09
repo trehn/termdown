@@ -4,7 +4,7 @@
 Usage: termdown [OPTIONS] [TIMESPEC]
 
   Starts a countdown to or from TIMESPEC. Example values for TIMESPEC:
-  10, '1h 5m 30s', '12:00', '2020-01-01', '2020-01-01 14:00'.
+  10, '1h 5m 30s', '12:00', '2020-01-01', '2020-01-01 14:00 UTC'.
 
   If TIMESPEC is not given, termdown will operate in stopwatch mode
   and count forward.

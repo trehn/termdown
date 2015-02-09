@@ -19,6 +19,7 @@ from time import sleep
 import unicodedata
 
 import click
+from dateutil import tz
 from dateutil.parser import parse
 from pyfiglet import Figlet
 
@@ -176,7 +177,12 @@ def parse_timestr(timestr):
         # my frames to be drawn at full seconds, so I enforce
         # microsecond=0.
         sync_start = sync_start.replace(microsecond=0)
-
+    try:
+        # try to convert target to naive local timezone
+        target = target.astimezone(tz=tz.tzlocal()).replace(tzinfo=None)
+    except ValueError:
+        # parse() already returned a naive datetime, all is well
+        pass
     return (sync_start, target)
 
 
@@ -482,7 +488,7 @@ def main(**kwargs):
     """
     \b
     Starts a countdown to or from TIMESPEC. Example values for TIMESPEC:
-    10, '1h 5m 30s', '12:00', '2020-01-01', '2020-01-01 14:00'.
+    10, '1h 5m 30s', '12:00', '2020-01-01', '2020-01-01 14:00 UTC'.
     \b
     If TIMESPEC is not given, termdown will operate in stopwatch mode
     and count forward.
