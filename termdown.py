@@ -66,10 +66,8 @@ def draw_text(stdscr, text, color=0):
     """
     y, x = stdscr.getmaxyx()
     lines = pad_to_size(text, x-1, y-1).rstrip("\n").split("\n")
-    i = 0
-    for line in lines:
+    for i, line in enumerate(lines):
         stdscr.addstr(i, 0, line, curses.color_pair(color))
-        i += 1
     stdscr.refresh()
 
 
