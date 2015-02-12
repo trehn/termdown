@@ -94,6 +94,27 @@ def format_seconds(seconds, hide_seconds=False):
     return output.strip()
 
 
+def format_seconds_alt(seconds, start, hide_seconds=False):
+    # make sure we always show at least 00:00:00
+    start = max(start, 86400)
+    output = ""
+    total_seconds = seconds
+    for period_seconds in (
+        31557600,
+        86400,
+        3600,
+        60,
+        1,
+    ):
+        actual_period_value = int(seconds / period_seconds)
+        if actual_period_value > 0:
+            output += str(actual_period_value).zfill(2) + ":"
+        elif start > period_seconds or total_seconds > period_seconds:
+            output += "00:"
+        seconds = seconds % period_seconds
+    return output.rstrip(":")
+
+
 def graceful_ctrlc(func):
     """
     Makes the decorated function terminate silently on CTRL+C.
@@ -213,6 +234,7 @@ def print_version(ctx, param, value):
 @graceful_ctrlc
 def countdown(
         stdscr,
+        alt_format=False,
         font=DEFAULT_FONT,
         blink=False,
         critical=3,
@@ -238,11 +260,15 @@ def countdown(
     )
     input_thread.start()
 
-    seconds_left = int(ceil((target - datetime.now()).total_seconds()))
+    seconds_total = seconds_left = int(ceil((target - datetime.now()).total_seconds()))
 
     try:
         while seconds_left > 0 or blink or text:
-            countdown_text = format_seconds(seconds_left, hide_seconds=no_seconds)
+            if alt_format:
+                countdown_text = format_seconds_alt(
+                    seconds_left, seconds_total, hide_seconds=no_seconds)
+            else:
+                countdown_text = format_seconds(seconds_left, hide_seconds=no_seconds)
             if seconds_left > 0:
                 with curses_lock:
                     stdscr.erase()
@@ -357,6 +383,7 @@ def countdown(
 @graceful_ctrlc
 def stopwatch(
     stdscr,
+    alt_format=False,
     font=DEFAULT_FONT,
     no_seconds=False,
     quit_after=None,
@@ -375,7 +402,10 @@ def stopwatch(
         sync_start = datetime.now()
         seconds_elapsed = 0
         while quit_after is None or seconds_elapsed < int(quit_after):
-            countdown_text = format_seconds(seconds_elapsed, hide_seconds=no_seconds)
+            if alt_format:
+                countdown_text = format_seconds_alt(seconds_elapsed, 0, hide_seconds=no_seconds)
+            else:
+                countdown_text = format_seconds(seconds_elapsed, hide_seconds=no_seconds)
             with curses_lock:
                 stdscr.erase()
                 draw_text(
@@ -430,6 +460,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 
 
 @click.command()
+@click.option("-a", "--alt-format", default=False, is_flag=True,
+              help="Use colon-separated time format")
 @click.option("-b", "--blink", default=False, is_flag=True,
               help="Flash terminal at end of countdown")
 @click.option("-c", "--critical", default=3, metavar="N",

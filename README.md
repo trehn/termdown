@@ -15,6 +15,7 @@ Usage: termdown [OPTIONS] [TIMESPEC]
       Q       Quit
 
 Options:
+  -a, --alt-format    Use colon-separated time format
   -b, --blink         Flash terminal at end of countdown
   -c, --critical N    Draw final N seconds in red (defaults to 3)
   -f, --font FONT     Choose from http://www.figlet.org/examples.html
