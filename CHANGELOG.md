@@ -1,3 +1,13 @@
+1.8.0
+=====
+
+2015-02-15
+
+* added ``--title``
+* added ``--alt-format``
+* fixed using dates in other timezones
+
+
 1.7.2
 =====
 
