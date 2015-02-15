@@ -60,11 +60,18 @@ class CursesReturnValue(Exception):
         self.value = value
 
 
-def draw_text(stdscr, text, color=0):
+def draw_text(stdscr, text, color=0, title=None):
     """
     Draws text in the given color. Duh.
     """
     y, x = stdscr.getmaxyx()
+    if title:
+        longest_line = max(map(len, (title + "\n" + text).split("\n")))
+        title = pad_to_size(title, x-1, 1)
+        if "\n" in title.rstrip("\n"):
+            # hack to get more spacing between title and body for figlet
+            title += "\n" * 5
+        text = title + "\n" + pad_to_size(text, x-1, len(text.split("\n")))
     lines = pad_to_size(text, x-1, y-1).rstrip("\n").split("\n")
     for i, line in enumerate(lines):
         stdscr.addstr(i, 0, line, curses.color_pair(color))
@@ -241,6 +248,7 @@ def countdown(
         quit_after=None,
         text=None,
         timespec=None,
+        title=None,
         voice=None,
         no_seconds=False,
         no_text_magic=True,
@@ -254,6 +262,10 @@ def countdown(
         exit(64)
     curses_lock, input_queue, quit_event = setup(stdscr)
     figlet = Figlet(font=font)
+
+    if title and not no_figlet:
+        title = figlet.renderText(title)
+
     input_thread = Thread(
         args=(stdscr, input_queue, quit_event, curses_lock),
         target=input_thread_body,
@@ -276,6 +288,7 @@ def countdown(
                         stdscr,
                         countdown_text if no_figlet else figlet.renderText(countdown_text),
                         color=1 if seconds_left <= critical else 0,
+                        title=title,
                     )
             if seconds_left <= 10 and voice:
                 Popen(["/usr/bin/say", "-v", voice, str(seconds_left)])
@@ -385,13 +398,18 @@ def stopwatch(
     stdscr,
     alt_format=False,
     font=DEFAULT_FONT,
+    no_figlet=False,
     no_seconds=False,
     quit_after=None,
-    no_figlet=False,
+    title=None,
     **kwargs
 ):
     curses_lock, input_queue, quit_event = setup(stdscr)
     figlet = Figlet(font=font)
+
+    if title and not no_figlet:
+        title = figlet.renderText(title)
+
     input_thread = Thread(
         args=(stdscr, input_queue, quit_event, curses_lock),
         target=input_thread_body,
@@ -411,6 +429,7 @@ def stopwatch(
                 draw_text(
                     stdscr,
                     countdown_text if no_figlet else figlet.renderText(countdown_text),
+                    title=title,
                 )
             sleep_target = sync_start + timedelta(seconds=seconds_elapsed + 1)
             now = datetime.now()
@@ -427,6 +446,7 @@ def stopwatch(
                             stdscr,
                             countdown_text if no_figlet else figlet.renderText(countdown_text),
                             color=3,
+                            title=title,
                         )
                     input_action = input_queue.get()
                     if input_action == INPUT_PAUSE:
@@ -475,6 +495,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
               help="Don't show seconds until last minute")
 @click.option("-t", "--text",
               help="Text to display at end of countdown")
+@click.option("-T", "--title",
+              help="Text to display on top of countdown/stopwatch")
 @click.option("-v", "--voice", metavar="VOICE",
               help="Mac OS X only: spoken countdown (starting at 10), "
                    "choose VOICE from `say -v '?'`")
