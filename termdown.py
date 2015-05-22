@@ -124,13 +124,13 @@ def format_seconds_alt(seconds, start, hide_seconds=False):
 
 def graceful_ctrlc(func):
     """
-    Makes the decorated function terminate silently on CTRL+C.
+    Makes the decorated function exit with code 1 on CTRL+C.
     """
     def wrapper(*args, **kwargs):
         try:
             func(*args, **kwargs)
         except KeyboardInterrupt:
-            pass
+            exit(1)
     return wrapper
 
 
