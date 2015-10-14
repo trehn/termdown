@@ -67,14 +67,14 @@ def draw_text(stdscr, text, color=0, title=None):
     y, x = stdscr.getmaxyx()
     if title:
         longest_line = max(map(len, (title + "\n" + text).split("\n")))
-        title = pad_to_size(title, x-1, 1)
+        title = pad_to_size(title, x, 1)
         if "\n" in title.rstrip("\n"):
             # hack to get more spacing between title and body for figlet
             title += "\n" * 5
-        text = title + "\n" + pad_to_size(text, x-1, len(text.split("\n")))
-    lines = pad_to_size(text, x-1, y-1).rstrip("\n").split("\n")
+        text = title + "\n" + pad_to_size(text, x, len(text.split("\n")))
+    lines = pad_to_size(text, x, y).rstrip("\n").split("\n")
     for i, line in enumerate(lines):
-        stdscr.addstr(i, 0, line, curses.color_pair(color))
+        stdscr.insstr(i, 0, line, curses.color_pair(color))
     stdscr.refresh()
 
 
