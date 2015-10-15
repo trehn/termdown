@@ -460,7 +460,7 @@ def stopwatch(
     finally:
         quit_event.set()
         input_thread.join()
-        raise CursesReturnValue((datetime.now() - sync_start).total_seconds())
+    raise CursesReturnValue((datetime.now() - sync_start).total_seconds())
 
 
 def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
