@@ -242,21 +242,21 @@ def print_version(ctx, param, value):
 
 @graceful_ctrlc
 def countdown(
-        stdscr,
-        alt_format=False,
-        font=DEFAULT_FONT,
-        blink=False,
-        critical=3,
-        quit_after=None,
-        text=None,
-        timespec=None,
-        title=None,
-        voice=None,
-        no_seconds=False,
-        no_text_magic=True,
-        no_figlet=False,
-        **kwargs
-    ):
+    stdscr,
+    alt_format=False,
+    font=DEFAULT_FONT,
+    blink=False,
+    critical=3,
+    quit_after=None,
+    text=None,
+    timespec=None,
+    title=None,
+    voice=None,
+    no_seconds=False,
+    no_text_magic=True,
+    no_figlet=False,
+    **kwargs
+):
     try:
         sync_start, target = parse_timestr(timespec)
     except ValueError:
