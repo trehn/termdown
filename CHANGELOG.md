@@ -1,3 +1,12 @@
+1.9.0
+=====
+
+2015-10-24
+
+* now returns exit code 1 on CTRL+C
+* fixed drawing area being smaller than it could be
+
+
 1.8.0
 =====
 
