@@ -11,7 +11,14 @@ setup(
     author_email="torsten@rehn.email",
     license="GPLv3",
     url="https://github.com/trehn/termdown",
-    keywords=["terminal", "timer", "countdown", "curses"],
+    keywords=[
+        "console",
+        "countdown",
+        "curses",
+        "stopwatch",
+        "terminal",
+        "timer",
+    ],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console :: Curses",
