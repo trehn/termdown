@@ -23,6 +23,9 @@ from dateutil import tz
 from dateutil.parser import parse
 from pyfiglet import Figlet
 
+
+click.disable_unicode_literals_warning = True
+
 DEFAULT_FONT = "univers"
 TIMEDELTA_REGEX = re.compile(r'((?P<years>\d+)y ?)?'
                              r'((?P<days>\d+)d ?)?'
