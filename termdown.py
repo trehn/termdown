@@ -255,6 +255,7 @@ def countdown(
     no_seconds=False,
     no_text_magic=True,
     no_figlet=False,
+    window_title=False,
     **kwargs
 ):
     try:
@@ -283,6 +284,8 @@ def countdown(
                     seconds_left, seconds_total, hide_seconds=no_seconds)
             else:
                 countdown_text = format_seconds(seconds_left, hide_seconds=no_seconds)
+            if window_title:
+                Popen(["echo", "-en", "\033]2;{0}\007".format(countdown_text)])
             if seconds_left > 0:
                 with curses_lock:
                     stdscr.erase()
@@ -404,6 +407,7 @@ def stopwatch(
     no_seconds=False,
     quit_after=None,
     title=None,
+    window_title=False,
     **kwargs
 ):
     curses_lock, input_queue, quit_event = setup(stdscr)
@@ -499,6 +503,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
               help="Text to display at end of countdown")
 @click.option("-T", "--title",
               help="Text to display on top of countdown/stopwatch")
+@click.option("-w", "--window-title", default=False, is_flag=True,
+              help="Update the terminal title with the remaining time")
 @click.option("-v", "--voice", metavar="VOICE",
               help="Mac OS X only: spoken countdown (starting at 10), "
                    "choose VOICE from `say -v '?'`")
