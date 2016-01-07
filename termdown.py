@@ -255,7 +255,7 @@ def countdown(
     no_seconds=False,
     no_text_magic=True,
     no_figlet=False,
-    window_title=False,
+    no_window_title=False,
     **kwargs
 ):
     try:
@@ -286,7 +286,7 @@ def countdown(
                 countdown_text = format_seconds(seconds_left, hide_seconds=no_seconds)
             if seconds_left > 0:
                 with curses_lock:
-                    if window_title:
+                    if not no_window_title:
                         curses.putp("\033]2;{0}\007".format(countdown_text))
                     stdscr.erase()
                     draw_text(
@@ -396,7 +396,7 @@ def countdown(
                         continue
     finally:
         with curses_lock:
-            if window_title:
+            if not no_window_title:
                 curses.putp("\033]2;\007")
         quit_event.set()
         input_thread.join()
@@ -411,7 +411,7 @@ def stopwatch(
     no_seconds=False,
     quit_after=None,
     title=None,
-    window_title=False,
+    no_window_title=False,
     **kwargs
 ):
     curses_lock, input_queue, quit_event = setup(stdscr)
@@ -435,7 +435,7 @@ def stopwatch(
             else:
                 countdown_text = format_seconds(seconds_elapsed, hide_seconds=no_seconds)
             with curses_lock:
-                if window_title:
+                if not no_window_title:
                     curses.putp("\033]2;{0}\007".format(countdown_text))
                 stdscr.erase()
                 draw_text(
@@ -453,7 +453,7 @@ def stopwatch(
                 if input_action == INPUT_PAUSE:
                     pause_start = datetime.now()
                     with curses_lock:
-                        if window_title:
+                        if not no_window_title:
                             curses.putp("\033]2;{0}\007".format(countdown_text))
                         stdscr.erase()
                         draw_text(
@@ -473,7 +473,7 @@ def stopwatch(
             seconds_elapsed = int((datetime.now() - sync_start).total_seconds())
     finally:
         with curses_lock:
-            if window_title:
+            if not no_window_title:
                 curses.putp("\033]2;\007")
         quit_event.set()
         input_thread.join()
@@ -514,8 +514,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
               help="Text to display at end of countdown")
 @click.option("-T", "--title",
               help="Text to display on top of countdown/stopwatch")
-@click.option("-w", "--window-title", default=False, is_flag=True,
-              help="Update the terminal title with the remaining/elapsed time")
+@click.option("-W", "--no-window-title", default=False, is_flag=True,
+              help="Don't update terminal title with remaining/elapsed time")
 @click.option("-v", "--voice", metavar="VOICE",
               help="Mac OS X only: spoken countdown (starting at 10), "
                    "choose VOICE from `say -v '?'`")
