@@ -504,7 +504,7 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 @click.option("-T", "--title",
               help="Text to display on top of countdown/stopwatch")
 @click.option("-w", "--window-title", default=False, is_flag=True,
-              help="Update the terminal title with the remaining time")
+              help="Update the terminal title with the remaining/elapsed time")
 @click.option("-v", "--voice", metavar="VOICE",
               help="Mac OS X only: spoken countdown (starting at 10), "
                    "choose VOICE from `say -v '?'`")

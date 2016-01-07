@@ -24,6 +24,8 @@ Options:
   -s, --no-seconds    Don't show seconds until last minute
   -t, --text TEXT     Text to display at end of countdown
   -T, --title TEXT    Text to display on top of countdown/stopwatch
+  -w, --window-title  Update the terminal title with the remaining/elapsed
+                      time
   -v, --voice VOICE   Mac OS X only: spoken countdown (starting at 10), choose
                       VOICE from `say -v '?'`
   --no-figlet         Don't use ASCII art for display
