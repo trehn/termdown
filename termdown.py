@@ -284,10 +284,10 @@ def countdown(
                     seconds_left, seconds_total, hide_seconds=no_seconds)
             else:
                 countdown_text = format_seconds(seconds_left, hide_seconds=no_seconds)
-            if window_title:
-                Popen(["echo", "-en", "\033]2;{0}\007".format(countdown_text)])
             if seconds_left > 0:
                 with curses_lock:
+                    if window_title:
+                        curses.putp("\033]2;{0}\007".format(countdown_text))
                     stdscr.erase()
                     draw_text(
                         stdscr,
@@ -362,6 +362,7 @@ def countdown(
                     extra_sleep = 0
                     while True:
                         with curses_lock:
+                            curses.putp("\033]2;{0}\007".format("/" if flip else "\\"))
                             if text:
                                 draw_text(stdscr, text, color=base_color if flip else 4)
                             else:
@@ -394,6 +395,9 @@ def countdown(
                     if blink_reset:
                         continue
     finally:
+        with curses_lock:
+            if window_title:
+                curses.putp("\033]2;\007")
         quit_event.set()
         input_thread.join()
 
@@ -431,6 +435,8 @@ def stopwatch(
             else:
                 countdown_text = format_seconds(seconds_elapsed, hide_seconds=no_seconds)
             with curses_lock:
+                if window_title:
+                    curses.putp("\033]2;{0}\007".format(countdown_text))
                 stdscr.erase()
                 draw_text(
                     stdscr,
@@ -447,6 +453,8 @@ def stopwatch(
                 if input_action == INPUT_PAUSE:
                     pause_start = datetime.now()
                     with curses_lock:
+                        if window_title:
+                            curses.putp("\033]2;{0}\007".format(countdown_text))
                         stdscr.erase()
                         draw_text(
                             stdscr,
@@ -464,6 +472,9 @@ def stopwatch(
                     seconds_elapsed = 0
             seconds_elapsed = int((datetime.now() - sync_start).total_seconds())
     finally:
+        with curses_lock:
+            if window_title:
+                curses.putp("\033]2;\007")
         quit_event.set()
         input_thread.join()
     raise CursesReturnValue((datetime.now() - sync_start).total_seconds())
