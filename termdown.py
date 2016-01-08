@@ -21,7 +21,11 @@ import unicodedata
 import click
 from dateutil import tz
 from dateutil.parser import parse
-from pyfiglet import Figlet
+try:
+    from pyfiglet import Figlet
+    NO_FIGLET = False
+except ImportError:
+    NO_FIGLET = True
 
 
 click.disable_unicode_literals_warning = True
@@ -264,7 +268,8 @@ def countdown(
         click.echo("Unable to parse TIME value '{}'".format(timespec))
         exit(64)
     curses_lock, input_queue, quit_event = setup(stdscr)
-    figlet = Figlet(font=font)
+    if not no_figlet:
+        figlet = Figlet(font=font)
 
     if title and not no_figlet:
         title = figlet.renderText(title)
@@ -415,7 +420,8 @@ def stopwatch(
     **kwargs
 ):
     curses_lock, input_queue, quit_event = setup(stdscr)
-    figlet = Figlet(font=font)
+    if not no_figlet:
+        figlet = Figlet(font=font)
 
     if title and not no_figlet:
         title = figlet.renderText(title)
@@ -541,6 +547,8 @@ def main(**kwargs):
     \tSPACE\tPause (will delay absolute TIMESPEC)
     \tQ\tQuit
     """
+    if NO_FIGLET:
+        kwargs['no_figlet'] = True
     if kwargs['timespec']:
         curses.wrapper(countdown, **kwargs)
     else:
