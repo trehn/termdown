@@ -279,6 +279,7 @@ def countdown(
 
     try:
         while seconds_left > 0 or blink or text:
+            figlet.width = stdscr.getmaxyx()[1]
             if alt_format:
                 countdown_text = format_seconds_alt(
                     seconds_left, seconds_total, hide_seconds=no_seconds)
