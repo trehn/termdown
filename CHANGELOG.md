@@ -1,3 +1,13 @@
+1.10.0
+======
+
+2016-03-29
+
+* show remaining time in window title
+* automatically fall back to --no-figlet if terminal is too small
+* fixed Figlet rendering not being adjusted to terminal size
+
+
 1.9.0
 =====
 
