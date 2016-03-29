@@ -431,6 +431,7 @@ def stopwatch(
         sync_start = datetime.now()
         seconds_elapsed = 0
         while quit_after is None or seconds_elapsed < int(quit_after):
+            figlet.width = stdscr.getmaxyx()[1]
             if alt_format:
                 countdown_text = format_seconds_alt(seconds_elapsed, 0, hide_seconds=no_seconds)
             else:
