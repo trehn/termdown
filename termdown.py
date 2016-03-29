@@ -63,10 +63,12 @@ class CursesReturnValue(Exception):
         self.value = value
 
 
-def draw_text(stdscr, text, color=0, title=None):
+def draw_text(stdscr, text, color=0, fallback=None, title=None):
     """
     Draws text in the given color. Duh.
     """
+    if fallback is None:
+        fallback = text
     y, x = stdscr.getmaxyx()
     if title:
         title = pad_to_size(title, x, 1)
@@ -75,8 +77,17 @@ def draw_text(stdscr, text, color=0, title=None):
             title += "\n" * 5
         text = title + "\n" + pad_to_size(text, x, len(text.split("\n")))
     lines = pad_to_size(text, x, y).rstrip("\n").split("\n")
-    for i, line in enumerate(lines):
-        stdscr.insstr(i, 0, line, curses.color_pair(color))
+
+    try:
+        for i, line in enumerate(lines):
+            stdscr.insstr(i, 0, line, curses.color_pair(color))
+    except:
+        lines = pad_to_size(fallback, x, y).rstrip("\n").split("\n")
+        try:
+            for i, line in enumerate(lines[:]):
+                stdscr.insstr(i, 0, line, curses.color_pair(color))
+        except:
+            pass
     stdscr.refresh()
 
 
@@ -294,6 +305,7 @@ def countdown(
                         stdscr,
                         countdown_text if no_figlet else figlet.renderText(countdown_text),
                         color=1 if seconds_left <= critical else 0,
+                        fallback=countdown_text,
                         title=title,
                     )
             if seconds_left <= 10 and voice:
@@ -327,6 +339,7 @@ def countdown(
                             stdscr,
                             countdown_text if no_figlet else figlet.renderText(countdown_text),
                             color=3,
+                            fallback=countdown_text,
                         )
                     input_action = input_queue.get()
                     if input_action == INPUT_PAUSE:
@@ -352,8 +365,11 @@ def countdown(
 
                 if text and not no_text_magic:
                     text = normalize_text(text)
+
+                rendered_text = text
+
                 if text and not no_figlet:
-                    text = figlet.renderText(text)
+                    rendered_text = figlet.renderText(text)
 
                 if blink or text:
                     base_color = 1 if blink else 0
@@ -365,7 +381,12 @@ def countdown(
                         with curses_lock:
                             curses.putp("\033]2;{0}\007".format("/" if flip else "\\").encode())
                             if text:
-                                draw_text(stdscr, text, color=base_color if flip else 4)
+                                draw_text(
+                                    stdscr,
+                                    rendered_text,
+                                    color=base_color if flip else 4,
+                                    fallback=text,
+                                )
                             else:
                                 draw_text(stdscr, "", color=base_color if flip else 4)
                         if blink:
@@ -443,6 +464,7 @@ def stopwatch(
                 draw_text(
                     stdscr,
                     countdown_text if no_figlet else figlet.renderText(countdown_text),
+                    fallback=countdown_text,
                     title=title,
                 )
             sleep_target = sync_start + timedelta(seconds=seconds_elapsed + 1)
@@ -462,6 +484,7 @@ def stopwatch(
                             stdscr,
                             countdown_text if no_figlet else figlet.renderText(countdown_text),
                             color=3,
+                            fallback=countdown_text,
                             title=title,
                         )
                     input_action = input_queue.get()
