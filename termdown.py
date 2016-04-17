@@ -54,15 +54,6 @@ def setup(stdscr):
     return (curses_lock, input_queue, quit_event)
 
 
-class CursesReturnValue(Exception):
-    """
-    curses.wrapper() does not provide the return value of the called
-    function, so we use this hack to pass something through.
-    """
-    def __init__(self, value):
-        self.value = value
-
-
 def draw_text(stdscr, text, color=0, fallback=None, title=None):
     """
     Draws text in the given color. Duh.
@@ -141,7 +132,7 @@ def graceful_ctrlc(func):
     """
     def wrapper(*args, **kwargs):
         try:
-            func(*args, **kwargs)
+            return func(*args, **kwargs)
         except KeyboardInterrupt:
             exit(1)
     return wrapper
@@ -502,7 +493,7 @@ def stopwatch(
                 curses.putp("\033]2;\007".encode())
         quit_event.set()
         input_thread.join()
-    raise CursesReturnValue((datetime.now() - sync_start).total_seconds())
+    return (datetime.now() - sync_start).total_seconds()
 
 
 def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
@@ -569,11 +560,9 @@ def main(**kwargs):
     if kwargs['timespec']:
         curses.wrapper(countdown, **kwargs)
     else:
-        try:
-            curses.wrapper(stopwatch, **kwargs)
-        except CursesReturnValue as e:
-            stderr.write("{:.3f}\t{}\n".format(e.value, format_seconds(int(e.value))))
-            stderr.flush()
+        seconds_elapsed = curses.wrapper(stopwatch, **kwargs)
+        stderr.write("{:.3f}\t{}\n".format(seconds_elapsed, format_seconds(int(seconds_elapsed))))
+        stderr.flush()
 
 
 if __name__ == '__main__':
