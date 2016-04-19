@@ -14,7 +14,7 @@ except ImportError:
 import re
 import os
 from subprocess import Popen
-from sys import exit, stderr
+from sys import exit, stderr, stdout
 from threading import Event, Lock, Thread
 from time import sleep
 import unicodedata
@@ -300,7 +300,7 @@ def countdown(
             if seconds_left > 0:
                 with curses_lock:
                     if not no_window_title:
-                        os.write(1, "\033]2;{0}\007".format(countdown_text).encode())
+                        os.write(stdout.fileno(), "\033]2;{0}\007".format(countdown_text).encode())
                     stdscr.erase()
                     draw_text(
                         stdscr,
@@ -380,7 +380,7 @@ def countdown(
                     extra_sleep = 0
                     while True:
                         with curses_lock:
-                            os.write(1, "\033]2;{0}\007".format("/" if flip else "\\").encode())
+                            os.write(stdout.fileno(), "\033]2;{0}\007".format("/" if flip else "\\").encode())
                             if text:
                                 draw_text(
                                     stdscr,
@@ -420,7 +420,7 @@ def countdown(
     finally:
         with curses_lock:
             if not no_window_title:
-                os.write(1, "\033]2;\007".encode())
+                os.write(stdout.fileno(), "\033]2;\007".encode())
         quit_event.set()
         input_thread.join()
 
@@ -460,7 +460,7 @@ def stopwatch(
                 countdown_text = format_seconds(seconds_elapsed, hide_seconds=no_seconds)
             with curses_lock:
                 if not no_window_title:
-                    os.write(1, "\033]2;{0}\007".format(countdown_text).encode())
+                    os.write(stdout.fileno(), "\033]2;{0}\007".format(countdown_text).encode())
                 stdscr.erase()
                 draw_text(
                     stdscr,
@@ -479,7 +479,7 @@ def stopwatch(
                     pause_start = datetime.now()
                     with curses_lock:
                         if not no_window_title:
-                            os.write(1, "\033]2;{0}\007".format(countdown_text).encode())
+                            os.write(stdout.fileno(), "\033]2;{0}\007".format(countdown_text).encode())
                         stdscr.erase()
                         draw_text(
                             stdscr,
@@ -500,7 +500,7 @@ def stopwatch(
     finally:
         with curses_lock:
             if not no_window_title:
-                os.write(1, "\033]2;\007".encode())
+                os.write(stdout.fileno(), "\033]2;\007".encode())
         quit_event.set()
         input_thread.join()
     raise CursesReturnValue((datetime.now() - sync_start).total_seconds())
