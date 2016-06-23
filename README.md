@@ -13,6 +13,8 @@ Usage: termdown [OPTIONS] [TIMESPEC]
       R       Reset
       SPACE   Pause (will delay absolute TIMESPEC)
       Q       Quit
+  Stopwatch mode:
+      L       Lap (Save the time and start counting from 0)
 
 Options:
   -a, --alt-format       Use colon-separated time format
