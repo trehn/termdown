@@ -1,7 +1,12 @@
-WIP
-===
+1.11.0
+======
 
-* added the lap feature
+2016-06-26
+
+* added laps
+* added support for espeak
+* fixed window title not updating in some terminals
+
 
 1.10.0
 ======
