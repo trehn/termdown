@@ -301,7 +301,12 @@ def countdown(
                         title=title,
                     )
             if seconds_left <= 10 and voice:
-                Popen(["/usr/bin/say", "-v", voice, str(seconds_left)])
+                voice_exec = "echo"
+                if os.path.exists("/usr/bin/say"):
+                    voice_exec = "/usr/bin/say"
+                elif os.path.exists("/usr/bin/espeak"):
+                    voice_exec = "/usr/bin/espeak"
+                Popen([voice_exec, "-v", voice, str(seconds_left)])
 
             # We want to sleep until this point of time has been
             # reached:
@@ -534,8 +539,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 @click.option("-W", "--no-window-title", default=False, is_flag=True,
               help="Don't update terminal title with remaining/elapsed time")
 @click.option("-v", "--voice", metavar="VOICE",
-              help="Mac OS X only: spoken countdown (starting at 10), "
-                   "choose VOICE from `say -v '?'`")
+              help="Spoken countdown (starting at 10), [Requires `espeak` (Linux) or `say` (Mac OS X)]"
+                   "choose VOICE from `say -v '?'` or `espeak --voices` ")
 @click.option("--no-figlet", default=False, is_flag=True,
               help="Don't use ASCII art for display")
 @click.option("--no-text-magic", default=False, is_flag=True,
