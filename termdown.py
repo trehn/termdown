@@ -548,8 +548,9 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 @click.option("-W", "--no-window-title", default=False, is_flag=True,
               help="Don't update terminal title with remaining/elapsed time")
 @click.option("-v", "--voice", metavar="VOICE",
-              help="Spoken countdown (starting at 10), [Requires `espeak` (Linux) or `say` (Mac OS X)]"
-                   "choose VOICE from `say -v '?'` or `espeak --voices` ")
+              help="Spoken countdown (starting at 10; "
+                   "requires `espeak` on Linux or `say` on macOS; "
+                   "choose VOICE from `say -v '?'` or `espeak --voices`)")
 @click.option("--no-figlet", default=False, is_flag=True,
               help="Don't use ASCII art for display")
 @click.option("--no-text-magic", default=False, is_flag=True,
@@ -568,11 +569,10 @@ def main(**kwargs):
     and count forward.
     \b
     Hotkeys:
+    \tL\tLap (stopwatch mode only)
     \tR\tReset
     \tSPACE\tPause (will delay absolute TIMESPEC)
     \tQ\tQuit
-    Stopwatch mode:
-    \tL\tLap (Save the time and start counting from 0)
     """
     if kwargs['timespec']:
         curses.wrapper(countdown, **kwargs)

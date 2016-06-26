@@ -10,11 +10,10 @@ Usage: termdown [OPTIONS] [TIMESPEC]
   and count forward.
 
   Hotkeys:
+      L       Lap (stopwatch mode only)
       R       Reset
       SPACE   Pause (will delay absolute TIMESPEC)
       Q       Quit
-  Stopwatch mode:
-      L       Lap (Save the time and start counting from 0)
 
 Options:
   -a, --alt-format       Use colon-separated time format
@@ -28,8 +27,9 @@ Options:
   -T, --title TEXT       Text to display on top of countdown/stopwatch
   -W, --no-window-title  Don't update terminal title with remaining/elapsed
                          time
-  -v, --voice VOICE      Mac OS X only: spoken countdown (starting at 10),
-                         choose VOICE from `say -v '?'`
+  -v, --voice VOICE      Spoken countdown (starting at 10; requires `espeak`
+                         on Linux or `say` on macOS; choose VOICE from `say -v
+                         '?'` or `espeak --voices`)
   --no-figlet            Don't use ASCII art for display
   --no-text-magic        Don't try to replace non-ASCII characters (use with
                          -t)
