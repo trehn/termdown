@@ -349,6 +349,8 @@ def countdown(
                     sync_start, target = parse_timestr(timespec)
                     seconds_left = int(ceil((target - datetime.now()).total_seconds()))
                     continue
+                elif input_action == INPUT_LAP:
+                    continue
 
             sync_start = sleep_target
 
