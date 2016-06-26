@@ -1,3 +1,8 @@
+WIP
+===
+
+* added the lap feature
+
 1.10.0
 ======
 

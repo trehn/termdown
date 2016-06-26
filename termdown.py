@@ -36,6 +36,7 @@ TIMEDELTA_REGEX = re.compile(r'((?P<years>\d+)y ?)?'
 INPUT_PAUSE = 1
 INPUT_RESET = 2
 INPUT_EXIT = 3
+INPUT_LAP = 4
 
 
 def setup(stdscr):
@@ -448,6 +449,7 @@ def stopwatch(
     try:
         sync_start = datetime.now()
         seconds_elapsed = 0
+        laps = []
         while quit_after is None or seconds_elapsed < int(quit_after):
             figlet.width = stdscr.getmaxyx()[1]
             if alt_format:
@@ -491,6 +493,11 @@ def stopwatch(
                     break
                 elif input_action == INPUT_RESET:
                     sync_start = datetime.now()
+                    laps = []
+                    seconds_elapsed = 0
+                elif input_action == INPUT_LAP:
+                    laps.append((datetime.now() - sync_start).total_seconds())
+                    sync_start = datetime.now()
                     seconds_elapsed = 0
             seconds_elapsed = int((datetime.now() - sync_start).total_seconds())
     finally:
@@ -499,7 +506,7 @@ def stopwatch(
                 os.write(stdout.fileno(), "\033]2;\007".encode())
         quit_event.set()
         input_thread.join()
-    return (datetime.now() - sync_start).total_seconds()
+    return (datetime.now() - sync_start).total_seconds(), laps
 
 
 def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
@@ -515,6 +522,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
             input_queue.put(INPUT_PAUSE)
         elif key in ("r", "R"):
             input_queue.put(INPUT_RESET)
+        elif key in ("l", "L"):
+            input_queue.put(INPUT_LAP)
         sleep(0.01)
 
 
@@ -562,12 +571,24 @@ def main(**kwargs):
     \tR\tReset
     \tSPACE\tPause (will delay absolute TIMESPEC)
     \tQ\tQuit
+    Stopwatch mode:
+    \tL\tLap (Save the time and start counting from 0)
     """
     if kwargs['timespec']:
         curses.wrapper(countdown, **kwargs)
     else:
-        seconds_elapsed = curses.wrapper(stopwatch, **kwargs)
+        seconds_elapsed, laps = curses.wrapper(stopwatch, **kwargs)
+
+        for i in laps:
+            stderr.write("{:.3f}\t{}\n".format(i, format_seconds(int(i))))
         stderr.write("{:.3f}\t{}\n".format(seconds_elapsed, format_seconds(int(seconds_elapsed))))
+
+        if (len(laps) > 0):
+            laps.append(seconds_elapsed)
+            total_seconds = sum(laps)
+            average_seconds = total_seconds / len(laps)
+            stderr.write("{:.3f}\tavg\n".format(average_seconds))
+            stderr.write("{:.3f}\t{}\n".format(total_seconds, format_seconds(int(total_seconds))))
         stderr.flush()
 
 
