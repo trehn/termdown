@@ -13,6 +13,7 @@ except ImportError:
     from Queue import Empty, Queue
 import re
 import os
+from os.path import abspath, dirname
 from subprocess import Popen
 from sys import exit, stderr, stdout
 from threading import Event, Lock, Thread
@@ -248,7 +249,7 @@ def verify_outfile(ctx, param, value):
     if value:
         if os.path.exists(value):
             raise click.BadParameter("File already exists: {}".format(value))
-        if not os.access(os.path.dirname(value), os.W_OK):
+        if not os.access(dirname(abspath(value)), os.W_OK):
             raise click.BadParameter("Unable to write file: {}".format(value))
     return value
 
