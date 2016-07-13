@@ -244,6 +244,12 @@ def print_version(ctx, param, value):
     ctx.exit()
 
 
+def verify_outfile(ctx, param, value):
+    if value and os.path.exists(value):
+        raise click.BadParameter("File already exists: {}".format(value))
+    return value
+
+
 @graceful_ctrlc
 def countdown(
     stdscr,
@@ -256,6 +262,7 @@ def countdown(
     timespec=None,
     title=None,
     voice=None,
+    outfile=None,
     no_seconds=False,
     no_text_magic=True,
     no_figlet=False,
@@ -293,6 +300,10 @@ def countdown(
                 with curses_lock:
                     if not no_window_title:
                         os.write(stdout.fileno(), "\033]2;{0}\007".format(countdown_text).encode())
+                    if outfile:
+                        of = open(outfile, "w")
+                        of.write(countdown_text)
+                        of.close()
                     stdscr.erase()
                     draw_text(
                         stdscr,
@@ -420,6 +431,8 @@ def countdown(
         with curses_lock:
             if not no_window_title:
                 os.write(stdout.fileno(), "\033]2;\007".encode())
+            if outfile:
+                os.remove(outfile)
         quit_event.set()
         input_thread.join()
 
@@ -433,6 +446,7 @@ def stopwatch(
     no_seconds=False,
     quit_after=None,
     title=None,
+    outfile=None,
     no_window_title=False,
     **kwargs
 ):
@@ -461,6 +475,10 @@ def stopwatch(
             with curses_lock:
                 if not no_window_title:
                     os.write(stdout.fileno(), "\033]2;{0}\007".format(countdown_text).encode())
+                if outfile:
+                    of = open(outfile, "w")
+                    of.write(countdown_text)
+                    of.close()
                 stdscr.erase()
                 draw_text(
                     stdscr,
@@ -480,6 +498,10 @@ def stopwatch(
                     with curses_lock:
                         if not no_window_title:
                             os.write(stdout.fileno(), "\033]2;{0}\007".format(countdown_text).encode())
+                        if outfile:
+                            of = open(outfile, "w")
+                            of.write(countdown_text)
+                            of.close()
                         stdscr.erase()
                         draw_text(
                             stdscr,
@@ -506,6 +528,8 @@ def stopwatch(
         with curses_lock:
             if not no_window_title:
                 os.write(stdout.fileno(), "\033]2;\007".encode())
+            if outfile:
+                os.remove(outfile)
         quit_event.set()
         input_thread.join()
     return (datetime.now() - sync_start).total_seconds(), laps
@@ -553,6 +577,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
               help="Spoken countdown (starting at 10; "
                    "requires `espeak` on Linux or `say` on macOS; "
                    "choose VOICE from `say -v '?'` or `espeak --voices`)")
+@click.option("-o", "--outfile", metavar="PATH", callback=verify_outfile,
+              help="File to write current remaining/elapsed time to")
 @click.option("--no-figlet", default=False, is_flag=True,
               help="Don't use ASCII art for display")
 @click.option("--no-text-magic", default=False, is_flag=True,
