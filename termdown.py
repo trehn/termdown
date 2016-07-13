@@ -304,9 +304,8 @@ def countdown(
                     if not no_window_title:
                         os.write(stdout.fileno(), "\033]2;{0}\007".format(countdown_text).encode())
                     if outfile:
-                        of = open(outfile, "w")
-                        of.write(countdown_text)
-                        of.close()
+                        with open(outfile, 'w') as f:
+                            f.write("{}\n{}\n".format(countdown_text, seconds_left))
                     stdscr.erase()
                     draw_text(
                         stdscr,
