@@ -379,6 +379,10 @@ def countdown(
                 if text and not no_text_magic:
                     text = normalize_text(text)
 
+                if outfile:
+                    with open(outfile, 'w') as f:
+                        f.write("{}\n{}\n".format(text if text else "DONE", 0))
+
                 rendered_text = text
 
                 if text and not no_figlet:
