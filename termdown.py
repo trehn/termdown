@@ -275,8 +275,7 @@ def countdown(
     try:
         sync_start, target = parse_timestr(timespec)
     except ValueError:
-        click.echo("Unable to parse TIME value '{}'".format(timespec))
-        exit(64)
+        raise click.BadParameter("Unable to parse TIME value '{}'".format(timespec))
     curses_lock, input_queue, quit_event = setup(stdscr)
     figlet = Figlet(font=font)
 
