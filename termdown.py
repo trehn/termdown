@@ -249,7 +249,7 @@ def verify_outfile(ctx, param, value):
         if os.path.exists(value):
             raise click.BadParameter("File already exists: {}".format(value))
         if not os.access(os.path.dirname(value), os.W_OK):
-          raise click.BadParameter("Unable to write file: {}".format(value))
+            raise click.BadParameter("Unable to write file: {}".format(value))
     return value
 
 
