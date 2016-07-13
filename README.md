@@ -30,6 +30,7 @@ Options:
   -v, --voice VOICE      Spoken countdown (starting at 10; requires `espeak`
                          on Linux or `say` on macOS; choose VOICE from `say -v
                          '?'` or `espeak --voices`)
+  -o, --outfile PATH     File to write current remaining/elapsed time to
   --no-figlet            Don't use ASCII art for display
   --no-text-magic        Don't try to replace non-ASCII characters (use with
                          -t)
