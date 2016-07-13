@@ -245,8 +245,11 @@ def print_version(ctx, param, value):
 
 
 def verify_outfile(ctx, param, value):
-    if value and os.path.exists(value):
-        raise click.BadParameter("File already exists: {}".format(value))
+    if value:
+        if os.path.exists(value):
+            raise click.BadParameter("File already exists: {}".format(value))
+        if not os.access(os.path.dirname(value), os.W_OK):
+          raise click.BadParameter("Unable to write file: {}".format(value))
     return value
 
 
