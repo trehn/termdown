@@ -47,7 +47,11 @@ def setup(stdscr):
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_RED)
     curses.init_pair(3, curses.COLOR_GREEN, -1)
     curses.init_pair(4, -1, curses.COLOR_RED)
-    curses.curs_set(False)
+    try:
+        curses.curs_set(False)
+    except curses.error:
+        # fails on some terminals
+        pass
     stdscr.timeout(0)
 
     # prepare input thread mechanisms
