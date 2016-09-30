@@ -23,7 +23,7 @@ import unicodedata
 import click
 from dateutil import tz
 from dateutil.parser import parse
-from pyfiglet import Figlet
+from pyfiglet import CharNotPrinted, Figlet
 
 
 click.disable_unicode_literals_warning = True
@@ -281,7 +281,10 @@ def countdown(
     figlet = Figlet(font=font)
 
     if title and not no_figlet:
-        title = figlet.renderText(title)
+        try:
+            title = figlet.renderText(title)
+        except CharNotPrinted:
+            title = ""
 
     input_thread = Thread(
         args=(stdscr, input_queue, quit_event, curses_lock),
@@ -307,13 +310,16 @@ def countdown(
                         with open(outfile, 'w') as f:
                             f.write("{}\n{}\n".format(countdown_text, seconds_left))
                     stdscr.erase()
-                    draw_text(
-                        stdscr,
-                        countdown_text if no_figlet else figlet.renderText(countdown_text),
-                        color=1 if seconds_left <= critical else 0,
-                        fallback=countdown_text,
-                        title=title,
-                    )
+                    try:
+                        draw_text(
+                            stdscr,
+                            countdown_text if no_figlet else figlet.renderText(countdown_text),
+                            color=1 if seconds_left <= critical else 0,
+                            fallback=countdown_text,
+                            title=title,
+                        )
+                    except CharNotPrinted:
+                        draw_text(stdscr, "E")
             if seconds_left <= 10 and voice:
                 voice_exec = "echo"
                 if os.path.exists("/usr/bin/say"):
@@ -346,12 +352,15 @@ def countdown(
                     pause_start = datetime.now()
                     with curses_lock:
                         stdscr.erase()
-                        draw_text(
-                            stdscr,
-                            countdown_text if no_figlet else figlet.renderText(countdown_text),
-                            color=3,
-                            fallback=countdown_text,
-                        )
+                        try:
+                            draw_text(
+                                stdscr,
+                                countdown_text if no_figlet else figlet.renderText(countdown_text),
+                                color=3,
+                                fallback=countdown_text,
+                            )
+                        except CharNotPrinted:
+                            draw_text(stdscr, "E")
                     input_action = input_queue.get()
                     if input_action == INPUT_PAUSE:
                         sync_start += (datetime.now() - pause_start)
@@ -386,7 +395,10 @@ def countdown(
                 rendered_text = text
 
                 if text and not no_figlet:
-                    rendered_text = figlet.renderText(text)
+                    try:
+                        rendered_text = figlet.renderText(text)
+                    except CharNotPrinted:
+                        rendered_text = ""
 
                 if blink or text:
                     base_color = 1 if blink else 0
@@ -460,7 +472,10 @@ def stopwatch(
     figlet = Figlet(font=font)
 
     if title and not no_figlet:
-        title = figlet.renderText(title)
+        try:
+            title = figlet.renderText(title)
+        except CharNotPrinted:
+            title = ""
 
     input_thread = Thread(
         args=(stdscr, input_queue, quit_event, curses_lock),
@@ -485,12 +500,15 @@ def stopwatch(
                     with open(outfile, 'w') as f:
                         f.write("{}\n{}\n".format(countdown_text, seconds_elapsed))
                 stdscr.erase()
-                draw_text(
-                    stdscr,
-                    countdown_text if no_figlet else figlet.renderText(countdown_text),
-                    fallback=countdown_text,
-                    title=title,
-                )
+                try:
+                    draw_text(
+                        stdscr,
+                        countdown_text if no_figlet else figlet.renderText(countdown_text),
+                        fallback=countdown_text,
+                        title=title,
+                    )
+                except CharNotPrinted:
+                    draw_text(stdscr, "E")
             sleep_target = sync_start + timedelta(seconds=seconds_elapsed + 1)
             now = datetime.now()
             if sleep_target > now:
@@ -507,13 +525,16 @@ def stopwatch(
                             with open(outfile, 'w') as f:
                                 f.write("{}\n{}\n".format(countdown_text, seconds_elapsed))
                         stdscr.erase()
-                        draw_text(
-                            stdscr,
-                            countdown_text if no_figlet else figlet.renderText(countdown_text),
-                            color=3,
-                            fallback=countdown_text,
-                            title=title,
-                        )
+                        try:
+                            draw_text(
+                                stdscr,
+                                countdown_text if no_figlet else figlet.renderText(countdown_text),
+                                color=3,
+                                fallback=countdown_text,
+                                title=title,
+                            )
+                        except CharNotPrinted:
+                            draw_text(stdscr, "E")
                     input_action = input_queue.get()
                     if input_action == INPUT_PAUSE:
                         sync_start += (datetime.now() - pause_start)
