@@ -1,3 +1,13 @@
+1.12.0
+======
+
+2016-09-30
+
+* added `--outfile`
+* fixed exception in very small terminals
+* fixed cursor-related exception in some terminals
+
+
 1.11.0
 ======
 
