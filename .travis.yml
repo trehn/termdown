@@ -1,9 +1,12 @@
 sudo: required
 dist: trusty
 services:
-    - docker
+- docker
 cache:
-    directories:
-        - .encrypted
+  directories:
+  - ".encrypted"
 script:
-    - ./.travis.sh
+- "./.travis.sh"
+env:
+  global:
+    secure: EhBe4XPhNwOc+I7QoxL/Zr1BYmSeVFiKgp6GJpyeIcpN/TBtxrI6Q9bCzcKZCBYCZf3fCD38S+WJvgQqNAKL7F/qsmRmhvb6Qyo4OASgiVLKWgsMn5fK0v765EfwVyXK8QKXOwr+5s1oeTjjNFYwTF5NUZYTK0+UDQR0r6pTlXZBWURDY1/nV3Hp2tQkvo2im4vIGlvVnpIeEmC4aMxWWuEifNwuFmY4EZdISiBCZGQJxmQFE/W7Zm28KrA4Fax69CSd03duplw0J5Y5UREFZrL3axrYHU0XkbqB7PR5q6pDOo489VJv5LRs+Po+Ggyh8+MpVjwUcPC4VNhIns5n98h5dyx5EviR2V95bWsOdYl6t9QePalxOxxrqrQB0U8iq6gpRGrtnhLxZBtXS89MGy2ZVPe6zqkPz7wfj3zEcZRl4IrJiDPApLuFa0lawlAk3ANv7dthHBOzAU/G7d0KMc7Jas87ifz7VT38i0VKkji9osDTsHcMrTLOurkizTSlO76Y7UWgR7aVv3M8s9jpYjgAnFqykgg2/arUSL++ZBWCyLixX1R/8G67G06taP46G2bxlPLOFpU67KDIGaLyDCblloW2G5tZkp8bTllHvAtLRvEswv4m8T+iO9/SBDhd+XJsQhJgfapux/xXAk/7NaxIRBPbCvwbUsMjABieDNQ=
