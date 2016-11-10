@@ -15,9 +15,9 @@ openssl enc -aes-256-cbc -base64 -pass env:SNAPCRAFT_SECRET \
     -d -in ".encrypted/snapcraft.cfg.enc" \
     -out "$HOME/.config/snapcraft/snapcraft.cfg"
 
-if docker run -v "$HOME:/root" -v "$(pwd):/cwd snapcore/snapcraft" sh -c 'cd /cwd; snapcraft'; then
+if docker run -v "$HOME:/root" -v "$(pwd):/cwd" snapcore/snapcraft sh -c 'cd /cwd; snapcraft'; then
     if [ "${TRAVIS_BRANCH}" = "master" ]; then
-        docker run -v "$HOME:/root" -v "$(pwd):/cwd snapcore/snapcraft" sh -c "cd /cwd; snapcraft push *.snap --release edge"
+        docker run -v "$HOME:/root" -v "$(pwd):/cwd" snapcore/snapcraft sh -c "cd /cwd; snapcraft push *.snap --release edge"
     fi
 fi
 
