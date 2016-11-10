@@ -2,7 +2,7 @@ name: termdown
 version: '1.12.0'
 summary: Countdown timer and stopwatch in your terminal.
 description: |
-  Countdown timer and stopwatch in your terminal
+  Countdown timer and stopwatch in your terminal.
 
 grade: stable
 confinement: strict
