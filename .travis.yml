@@ -1,0 +1,9 @@
+sudo: required
+dist: trusty
+services:
+    - docker
+cache:
+    directories:
+        - .encrypted
+script:
+    - ./.travis.sh
