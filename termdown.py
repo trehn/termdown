@@ -14,7 +14,11 @@ except ImportError:
 import re
 import os
 from os.path import abspath, dirname
-from subprocess import Popen
+from subprocess import Popen, STDOUT
+try:
+    from subprocess import DEVNULL
+except ImportError:  # Python 2
+    DEVNULL = open(os.devnull, 'wb')
 from sys import exit, stderr, stdout
 from threading import Event, Lock, Thread
 from time import sleep
@@ -330,7 +334,7 @@ def countdown(
                     voice_exec = "/usr/bin/say"
                 elif os.path.exists("/usr/bin/espeak"):
                     voice_exec = "/usr/bin/espeak"
-                Popen([voice_exec, "-v", voice, str(seconds_left)])
+                Popen([voice_exec, "-v", voice, str(seconds_left)], stdout=DEVNULL, stderr=STDOUT)
 
             # We want to sleep until this point of time has been
             # reached:
