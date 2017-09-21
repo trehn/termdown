@@ -44,4 +44,4 @@ pip install termdown
 
 ------------------------------------------------------------------------
 
-![PyPI downloads](http://img.shields.io/pypi/dm/termdown.svg) &nbsp; ![PyPI version](http://img.shields.io/pypi/v/termdown.svg) &nbsp; ![Python 2.7](http://img.shields.io/badge/Python-2.7-green.svg) &nbsp; ![Python 3.x](http://img.shields.io/badge/Python-3.x-green.svg) &nbsp; ![PyPI license](http://img.shields.io/badge/License-GPLv3-red.svg)
+![PyPI version](http://img.shields.io/pypi/v/termdown.svg) &nbsp; ![Python 2.7](http://img.shields.io/badge/Python-2.7-green.svg) &nbsp; ![Python 3.x](http://img.shields.io/badge/Python-3.x-green.svg) &nbsp; ![PyPI license](http://img.shields.io/badge/License-GPLv3-red.svg)
