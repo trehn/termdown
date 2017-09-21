@@ -1,3 +1,12 @@
+1.12.1
+======
+
+2017-09-21
+
+* fixed espeak output messing up ncurses
+* fixed title not being included in non-figlet fallback text
+
+
 1.12.0
 ======
 
