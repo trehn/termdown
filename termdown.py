@@ -319,7 +319,7 @@ def countdown(
                             stdscr,
                             countdown_text if no_figlet else figlet.renderText(countdown_text),
                             color=1 if seconds_left <= critical else 0,
-                            fallback=countdown_text,
+                            fallback=title + "\n" + countdown_text if title else countdown_text,
                             title=title,
                         )
                     except CharNotPrinted:
