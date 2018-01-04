@@ -6,6 +6,7 @@ VERSION = "1.12.1"
 
 import curses
 from datetime import datetime, timedelta
+from functools import wraps
 from math import ceil
 try:
     from queue import Empty, Queue
@@ -141,6 +142,7 @@ def graceful_ctrlc(func):
     """
     Makes the decorated function exit with code 1 on CTRL+C.
     """
+    @wraps(func)
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
