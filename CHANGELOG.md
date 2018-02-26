@@ -1,3 +1,11 @@
+1.12.2
+======
+
+2018-02-26
+
+* fixed lap times being recorded incorrectly while paused
+
+
 1.12.1
 ======
 
