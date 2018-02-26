@@ -495,6 +495,7 @@ def stopwatch(
 
     try:
         sync_start = datetime.now()
+        pause_start = None
         seconds_elapsed = 0
         laps = []
         while quit_after is None or seconds_elapsed < int(quit_after):
@@ -548,13 +549,20 @@ def stopwatch(
                     input_action = input_queue.get()
                     if input_action == INPUT_PAUSE:
                         sync_start += (datetime.now() - pause_start)
+                        pause_start = None
                 if input_action == INPUT_EXIT:  # no elif here! input_action may have changed
+                    if pause_start:
+                        sync_start += (datetime.now() - pause_start)
+                        pause_start = None
                     break
                 elif input_action == INPUT_RESET:
                     sync_start = datetime.now()
                     laps = []
                     seconds_elapsed = 0
                 elif input_action == INPUT_LAP:
+                    if pause_start:
+                        sync_start += (datetime.now() - pause_start)
+                        pause_start = None
                     laps.append((datetime.now() - sync_start).total_seconds())
                     sync_start = datetime.now()
                     seconds_elapsed = 0
