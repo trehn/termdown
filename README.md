@@ -16,26 +16,30 @@ Usage: termdown [OPTIONS] [TIMESPEC]
       Q       Quit
 
 Options:
-  -a, --alt-format       Use colon-separated time format
-  -b, --blink            Flash terminal at end of countdown
-  -c, --critical N       Draw final N seconds in red (defaults to 3)
-  -f, --font FONT        Choose from http://www.figlet.org/examples.html
-  -q, --quit-after N     Quit N seconds after countdown (use with -b or -t) or
-                         terminate stopwatch after N seconds
-  -s, --no-seconds       Don't show seconds until last minute
-  -t, --text TEXT        Text to display at end of countdown
-  -T, --title TEXT       Text to display on top of countdown/stopwatch
-  -W, --no-window-title  Don't update terminal title with remaining/elapsed
-                         time
-  -v, --voice VOICE      Spoken countdown (starting at 10; requires `espeak`
-                         on Linux or `say` on macOS; choose VOICE from `say -v
-                         '?'` or `espeak --voices`)
-  -o, --outfile PATH     File to write current remaining/elapsed time to
-  --no-figlet            Don't use ASCII art for display
-  --no-text-magic        Don't try to replace non-ASCII characters (use with
-                         -t)
-  --version              Show version and exit
-  --help                 Show this message and exit
+  -a, --alt-format         Use colon-separated time format
+  -b, --blink              Flash terminal at end of countdown
+  -c, --critical N         Draw final N seconds in red (defaults to 3)
+  -f, --font FONT          Choose from http://www.figlet.org/examples.html
+  -p, --voice-prefix TEXT  Add TEXT to the beginning of --voice announciations
+                           (except per-second ones)
+  -q, --quit-after N       Quit N seconds after countdown (use with -b or -t)
+                           or terminate stopwatch after N seconds
+  -s, --no-seconds         Don't show seconds until last minute
+  -t, --text TEXT          Text to display at end of countdown
+  -T, --title TEXT         Text to display on top of countdown/stopwatch
+  -W, --no-window-title    Don't update terminal title with remaining/elapsed
+                           time
+  -v, --voice VOICE        Spoken countdown (at fixed intervals with per-
+                           second announciations starting at --critical;
+                           requires `espeak` on Linux or `say` on macOS;
+                           choose VOICE from `say -v '?'` or `espeak
+                           --voices`)
+  -o, --outfile PATH       File to write current remaining/elapsed time to
+  --no-figlet              Don't use ASCII art for display
+  --no-text-magic          Don't try to replace non-ASCII characters (use with
+                           -t)
+  --version                Show version and exit
+  --help                   Show this message and exit
 ```
 
 ```
