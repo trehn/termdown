@@ -655,16 +655,16 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 def main(**kwargs):
     """
     \b
-    Starts a countdown to or from TIMESPEC. Example values for TIMESPEC:
+    Starts a countdown to or from TIME. Example values for TIME:
     10, '1h 5m 30s', '12:00', '2020-01-01', '2020-01-01 14:00 UTC'.
     \b
-    If TIMESPEC is not given, termdown will operate in stopwatch mode
+    If TIME is not given, termdown will operate in stopwatch mode
     and count forward.
     \b
     Hotkeys:
     \tL\tLap (stopwatch mode only)
     \tR\tReset
-    \tSPACE\tPause (will delay absolute TIMESPEC)
+    \tSPACE\tPause (will delay absolute TIME)
     \tQ\tQuit
     """
     if kwargs['timespec']:

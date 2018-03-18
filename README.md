@@ -1,18 +1,18 @@
 ![termdown demo](/termdown.gif?raw=true)
 
 ```
-Usage: termdown [OPTIONS] [TIMESPEC]
+Usage: termdown [OPTIONS] [TIME]
 
-  Starts a countdown to or from TIMESPEC. Example values for TIMESPEC:
+  Starts a countdown to or from TIME. Example values for TIME:
   10, '1h 5m 30s', '12:00', '2020-01-01', '2020-01-01 14:00 UTC'.
 
-  If TIMESPEC is not given, termdown will operate in stopwatch mode
+  If TIME is not given, termdown will operate in stopwatch mode
   and count forward.
 
   Hotkeys:
       L       Lap (stopwatch mode only)
       R       Reset
-      SPACE   Pause (will delay absolute TIMESPEC)
+      SPACE   Pause (will delay absolute TIME)
       Q       Quit
 
 Options:
