@@ -1,3 +1,13 @@
+1.13.0
+======
+
+2018-03-18
+
+* added voice announciations at fixed intervals
+* added `--voice-prefix`
+* per-second voice announciations now start at `--critical`
+
+
 1.12.2
 ======
 
