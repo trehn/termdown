@@ -651,7 +651,7 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 @click.option("--version", is_flag=True, callback=print_version,
               expose_value=False, is_eager=True,
               help="Show version and exit")
-@click.argument('timespec', required=False)
+@click.argument('timespec', metavar="[TIME]", required=False)
 def main(**kwargs):
     """
     \b
