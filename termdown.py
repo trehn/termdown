@@ -278,6 +278,7 @@ def countdown(
     voice=None,
     voice_prefix=None,
     outfile=None,
+    no_bell=False,
     no_seconds=False,
     no_text_magic=True,
     no_figlet=False,
@@ -410,8 +411,9 @@ def countdown(
                 # we could write this entire block outside the parent while
                 # but that would leave us unable to reset everything
 
-                with curses_lock:
-                    curses.beep()
+                if not no_bell:
+                    with curses_lock:
+                        curses.beep()
 
                 if text and not no_text_magic:
                     text = normalize_text(text)
@@ -619,6 +621,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
               help="Use colon-separated time format")
 @click.option("-b", "--blink", default=False, is_flag=True,
               help="Flash terminal at end of countdown")
+@click.option("-B", "--no-bell", default=False, is_flag=True,
+              help="Don't ring terminal bell at end of countdown")
 @click.option("-c", "--critical", default=3, metavar="N",
               help="Draw final N seconds in red (defaults to 3)")
 @click.option("-f", "--font", default=DEFAULT_FONT, metavar="FONT",

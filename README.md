@@ -18,6 +18,7 @@ Usage: termdown [OPTIONS] [TIME]
 Options:
   -a, --alt-format         Use colon-separated time format
   -b, --blink              Flash terminal at end of countdown
+  -B, --no-bell            Don't ring terminal bell at end of countdown
   -c, --critical N         Draw final N seconds in red (defaults to 3)
   -f, --font FONT          Choose from http://www.figlet.org/examples.html
   -p, --voice-prefix TEXT  Add TEXT to the beginning of --voice announciations
