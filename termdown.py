@@ -276,6 +276,7 @@ def countdown(
     timespec=None,
     title=None,
     voice=None,
+    voice_prefix=None,
     outfile=None,
     no_seconds=False,
     no_text_magic=True,
@@ -295,6 +296,14 @@ def countdown(
             title = figlet.renderText(title)
         except CharNotPrinted:
             title = ""
+
+    voice_cmd = None
+    if voice:
+        for cmd in ("/usr/bin/say", "/usr/bin/espeak"):
+            if os.path.exists(cmd):
+                voice_cmd = cmd
+                break
+        voice_prefix = voice_prefix or ""
 
     input_thread = Thread(
         args=(stdscr, input_queue, quit_event, curses_lock),
@@ -330,13 +339,22 @@ def countdown(
                         )
                     except CharNotPrinted:
                         draw_text(stdscr, "E")
-            if seconds_left <= 10 and voice:
-                voice_exec = "echo"
-                if os.path.exists("/usr/bin/say"):
-                    voice_exec = "/usr/bin/say"
-                elif os.path.exists("/usr/bin/espeak"):
-                    voice_exec = "/usr/bin/espeak"
-                Popen([voice_exec, "-v", voice, str(seconds_left)], stdout=DEVNULL, stderr=STDOUT)
+            if voice_cmd:
+                announciation = None
+                if seconds_left <= critical:
+                    announciation = str(seconds_left)
+                elif seconds_left in (5, 10, 20, 30, 60):
+                    announciation = "{} {} seconds".format(voice_prefix, seconds_left)
+                elif seconds_left in (300, 600, 1800):
+                    announciation = "{} {} minutes".format(voice_prefix, int(seconds_left / 60))
+                elif seconds_left == 3600:
+                    announciation = "{} one hour".format(voice_prefix)
+                if announciation:
+                    Popen(
+                        [voice_cmd, "-v", voice, announciation.strip()],
+                        stdout=DEVNULL,
+                        stderr=STDOUT,
+                    )
 
             # We want to sleep until this point of time has been
             # reached:
@@ -605,6 +623,9 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
               help="Draw final N seconds in red (defaults to 3)")
 @click.option("-f", "--font", default=DEFAULT_FONT, metavar="FONT",
               help="Choose from http://www.figlet.org/examples.html")
+@click.option("-p", "--voice-prefix", metavar="TEXT",
+              help="Add TEXT to the beginning of --voice announciations "
+                   "(except per-second ones)")
 @click.option("-q", "--quit-after", metavar="N",
               help="Quit N seconds after countdown (use with -b or -t) "
                    "or terminate stopwatch after N seconds")
@@ -617,7 +638,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 @click.option("-W", "--no-window-title", default=False, is_flag=True,
               help="Don't update terminal title with remaining/elapsed time")
 @click.option("-v", "--voice", metavar="VOICE",
-              help="Spoken countdown (starting at 10; "
+              help="Spoken countdown "
+                   "(at fixed intervals with per-second announciations starting at --critical; "
                    "requires `espeak` on Linux or `say` on macOS; "
                    "choose VOICE from `say -v '?'` or `espeak --voices`)")
 @click.option("-o", "--outfile", metavar="PATH", callback=verify_outfile,
