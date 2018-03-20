@@ -392,8 +392,9 @@ def countdown(
                             draw_text(stdscr, "E")
                     input_action = input_queue.get()
                     if input_action == INPUT_PAUSE:
-                        sync_start += (datetime.now() - pause_start)
-                        target += (datetime.now() - pause_start)
+                        time_paused = datetime.now() - pause_start
+                        sync_start += time_paused
+                        target += time_paused
                 if input_action == INPUT_EXIT:  # no elif here! input_action may have changed
                     break
                 elif input_action == INPUT_RESET:
