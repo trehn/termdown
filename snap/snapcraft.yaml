@@ -1,0 +1,17 @@
+name: termdown
+version: '1.13.0'
+summary: Countdown timer and stopwatch in your terminal.
+description: Countdown timer and stopwatch in your terminal.
+
+grade: stable
+confinement: strict
+
+apps:
+  termdown:
+    command: termdown
+
+parts:
+  termdown:
+    source: .
+    plugin: python
+    python-version: python2
