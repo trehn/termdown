@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-VERSION = "1.12.0"
+VERSION = "1.13.0"
 
 import curses
 from datetime import datetime, timedelta
+from functools import wraps
 from math import ceil
 try:
     from queue import Empty, Queue
@@ -14,7 +15,11 @@ except ImportError:
 import re
 import os
 from os.path import abspath, dirname
-from subprocess import Popen
+from subprocess import Popen, STDOUT
+try:
+    from subprocess import DEVNULL
+except ImportError:  # Python 2
+    DEVNULL = open(os.devnull, 'wb')
 from sys import exit, stderr, stdout
 from threading import Event, Lock, Thread
 from time import sleep
@@ -137,6 +142,7 @@ def graceful_ctrlc(func):
     """
     Makes the decorated function exit with code 1 on CTRL+C.
     """
+    @wraps(func)
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -270,7 +276,9 @@ def countdown(
     timespec=None,
     title=None,
     voice=None,
+    voice_prefix=None,
     outfile=None,
+    no_bell=False,
     no_seconds=False,
     no_text_magic=True,
     no_figlet=False,
@@ -289,6 +297,14 @@ def countdown(
             title = figlet.renderText(title)
         except CharNotPrinted:
             title = ""
+
+    voice_cmd = None
+    if voice:
+        for cmd in ("/usr/bin/say", "/usr/bin/espeak"):
+            if os.path.exists(cmd):
+                voice_cmd = cmd
+                break
+        voice_prefix = voice_prefix or ""
 
     input_thread = Thread(
         args=(stdscr, input_queue, quit_event, curses_lock),
@@ -319,18 +335,27 @@ def countdown(
                             stdscr,
                             countdown_text if no_figlet else figlet.renderText(countdown_text),
                             color=1 if seconds_left <= critical else 0,
-                            fallback=countdown_text,
+                            fallback=title + "\n" + countdown_text if title else countdown_text,
                             title=title,
                         )
                     except CharNotPrinted:
                         draw_text(stdscr, "E")
-            if seconds_left <= 10 and voice:
-                voice_exec = "echo"
-                if os.path.exists("/usr/bin/say"):
-                    voice_exec = "/usr/bin/say"
-                elif os.path.exists("/usr/bin/espeak"):
-                    voice_exec = "/usr/bin/espeak"
-                Popen([voice_exec, "-v", voice, str(seconds_left)])
+            if voice_cmd:
+                announciation = None
+                if seconds_left <= critical:
+                    announciation = str(seconds_left)
+                elif seconds_left in (5, 10, 20, 30, 60):
+                    announciation = "{} {} seconds".format(voice_prefix, seconds_left)
+                elif seconds_left in (300, 600, 1800):
+                    announciation = "{} {} minutes".format(voice_prefix, int(seconds_left / 60))
+                elif seconds_left == 3600:
+                    announciation = "{} one hour".format(voice_prefix)
+                if announciation:
+                    Popen(
+                        [voice_cmd, "-v", voice, announciation.strip()],
+                        stdout=DEVNULL,
+                        stderr=STDOUT,
+                    )
 
             # We want to sleep until this point of time has been
             # reached:
@@ -367,8 +392,9 @@ def countdown(
                             draw_text(stdscr, "E")
                     input_action = input_queue.get()
                     if input_action == INPUT_PAUSE:
-                        sync_start += (datetime.now() - pause_start)
-                        target += (datetime.now() - pause_start)
+                        time_paused = datetime.now() - pause_start
+                        sync_start += time_paused
+                        target += time_paused
                 if input_action == INPUT_EXIT:  # no elif here! input_action may have changed
                     break
                 elif input_action == INPUT_RESET:
@@ -386,8 +412,9 @@ def countdown(
                 # we could write this entire block outside the parent while
                 # but that would leave us unable to reset everything
 
-                with curses_lock:
-                    curses.beep()
+                if not no_bell:
+                    with curses_lock:
+                        curses.beep()
 
                 if text and not no_text_magic:
                     text = normalize_text(text)
@@ -489,6 +516,7 @@ def stopwatch(
 
     try:
         sync_start = datetime.now()
+        pause_start = None
         seconds_elapsed = 0
         laps = []
         while quit_after is None or seconds_elapsed < int(quit_after):
@@ -542,13 +570,20 @@ def stopwatch(
                     input_action = input_queue.get()
                     if input_action == INPUT_PAUSE:
                         sync_start += (datetime.now() - pause_start)
+                        pause_start = None
                 if input_action == INPUT_EXIT:  # no elif here! input_action may have changed
+                    if pause_start:
+                        sync_start += (datetime.now() - pause_start)
+                        pause_start = None
                     break
                 elif input_action == INPUT_RESET:
                     sync_start = datetime.now()
                     laps = []
                     seconds_elapsed = 0
                 elif input_action == INPUT_LAP:
+                    if pause_start:
+                        sync_start += (datetime.now() - pause_start)
+                        pause_start = None
                     laps.append((datetime.now() - sync_start).total_seconds())
                     sync_start = datetime.now()
                     seconds_elapsed = 0
@@ -587,10 +622,15 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
               help="Use colon-separated time format")
 @click.option("-b", "--blink", default=False, is_flag=True,
               help="Flash terminal at end of countdown")
+@click.option("-B", "--no-bell", default=False, is_flag=True,
+              help="Don't ring terminal bell at end of countdown")
 @click.option("-c", "--critical", default=3, metavar="N",
               help="Draw final N seconds in red (defaults to 3)")
 @click.option("-f", "--font", default=DEFAULT_FONT, metavar="FONT",
               help="Choose from http://www.figlet.org/examples.html")
+@click.option("-p", "--voice-prefix", metavar="TEXT",
+              help="Add TEXT to the beginning of --voice announciations "
+                   "(except per-second ones)")
 @click.option("-q", "--quit-after", metavar="N",
               help="Quit N seconds after countdown (use with -b or -t) "
                    "or terminate stopwatch after N seconds")
@@ -603,7 +643,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 @click.option("-W", "--no-window-title", default=False, is_flag=True,
               help="Don't update terminal title with remaining/elapsed time")
 @click.option("-v", "--voice", metavar="VOICE",
-              help="Spoken countdown (starting at 10; "
+              help="Spoken countdown "
+                   "(at fixed intervals with per-second announciations starting at --critical; "
                    "requires `espeak` on Linux or `say` on macOS; "
                    "choose VOICE from `say -v '?'` or `espeak --voices`)")
 @click.option("-o", "--outfile", metavar="PATH", callback=verify_outfile,
@@ -615,20 +656,20 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 @click.option("--version", is_flag=True, callback=print_version,
               expose_value=False, is_eager=True,
               help="Show version and exit")
-@click.argument('timespec', required=False)
+@click.argument('timespec', metavar="[TIME]", required=False)
 def main(**kwargs):
     """
     \b
-    Starts a countdown to or from TIMESPEC. Example values for TIMESPEC:
+    Starts a countdown to or from TIME. Example values for TIME:
     10, '1h 5m 30s', '12:00', '2020-01-01', '2020-01-01 14:00 UTC'.
     \b
-    If TIMESPEC is not given, termdown will operate in stopwatch mode
+    If TIME is not given, termdown will operate in stopwatch mode
     and count forward.
     \b
     Hotkeys:
     \tL\tLap (stopwatch mode only)
     \tR\tReset
-    \tSPACE\tPause (will delay absolute TIMESPEC)
+    \tSPACE\tPause (will delay absolute TIME)
     \tQ\tQuit
     """
     if kwargs['timespec']:

@@ -1,3 +1,30 @@
+1.13.0
+======
+
+2018-03-18
+
+* added voice announciations at fixed intervals
+* added `--voice-prefix`
+* per-second voice announciations now start at `--critical`
+
+
+1.12.2
+======
+
+2018-02-26
+
+* fixed lap times being recorded incorrectly while paused
+
+
+1.12.1
+======
+
+2017-09-21
+
+* fixed espeak output messing up ncurses
+* fixed title not being included in non-figlet fallback text
+
+
 1.12.0
 ======
 
