@@ -34,6 +34,7 @@ from pyfiglet import CharNotPrinted, Figlet
 click.disable_unicode_literals_warning = True
 
 DEFAULT_FONT = "univers"
+DEFAULT_TIME_FORMAT = "%H:%M:%S"
 TIMEDELTA_REGEX = re.compile(r'((?P<years>\d+)y ?)?'
                              r'((?P<days>\d+)d ?)?'
                              r'((?P<hours>\d+)h ?)?'
@@ -283,6 +284,8 @@ def countdown(
     no_text_magic=True,
     no_figlet=False,
     no_window_title=False,
+    time=False,
+    time_format=DEFAULT_TIME_FORMAT,
     **kwargs
 ):
     try:
@@ -317,7 +320,9 @@ def countdown(
     try:
         while seconds_left > 0 or blink or text:
             figlet.width = stdscr.getmaxyx()[1]
-            if alt_format:
+            if time:
+                countdown_text = datetime.now().strftime(time_format)
+            elif alt_format:
                 countdown_text = format_seconds_alt(
                     seconds_left, seconds_total, hide_seconds=no_seconds)
             else:
@@ -360,6 +365,8 @@ def countdown(
             # We want to sleep until this point of time has been
             # reached:
             sleep_target = sync_start + timedelta(seconds=1)
+            if time:
+                sleep_target = sleep_target.replace(microsecond=0)
 
             # If sync_start has microsecond=0, it might happen that we
             # need to skip one frame (the very first one). This occurs
@@ -497,6 +504,8 @@ def stopwatch(
     title=None,
     outfile=None,
     no_window_title=False,
+    time=False,
+    time_format=DEFAULT_TIME_FORMAT,
     **kwargs
 ):
     curses_lock, input_queue, quit_event = setup(stdscr)
@@ -521,7 +530,9 @@ def stopwatch(
         laps = []
         while quit_after is None or seconds_elapsed < int(quit_after):
             figlet.width = stdscr.getmaxyx()[1]
-            if alt_format:
+            if time:
+                countdown_text = datetime.now().strftime(time_format)
+            elif alt_format:
                 countdown_text = format_seconds_alt(seconds_elapsed, 0, hide_seconds=no_seconds)
             else:
                 countdown_text = format_seconds(seconds_elapsed, hide_seconds=no_seconds)
@@ -542,6 +553,8 @@ def stopwatch(
                 except CharNotPrinted:
                     draw_text(stdscr, "E")
             sleep_target = sync_start + timedelta(seconds=seconds_elapsed + 1)
+            if time:
+                sleep_target = sleep_target.replace(microsecond=0)
             now = datetime.now()
             if sleep_target > now:
                 try:
@@ -656,6 +669,10 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 @click.option("--version", is_flag=True, callback=print_version,
               expose_value=False, is_eager=True,
               help="Show version and exit")
+@click.option("-z", "--time", default=False, is_flag=True,
+              help="Show current time instead of countdown/stopwatch")
+@click.option("-Z", "--time-format", default=DEFAULT_TIME_FORMAT,
+              help="Format for --time (defaults to \"{}\")".format(DEFAULT_TIME_FORMAT))
 @click.argument('timespec', metavar="[TIME]", required=False)
 def main(**kwargs):
     """

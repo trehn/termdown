@@ -40,6 +40,8 @@ Options:
   --no-text-magic          Don't try to replace non-ASCII characters (use with
                            -t)
   --version                Show version and exit
+  -z, --time               Show current time instead of countdown/stopwatch
+  -Z, --time-format TEXT   Format for --time (defaults to "%H:%M:%S")
   --help                   Show this message and exit
 ```
 
