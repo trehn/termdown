@@ -1,3 +1,12 @@
+1.14.0
+======
+
+2018-07-15
+
+* added `--time` and `--time-format`
+* added `--no-bell`
+
+
 1.13.0
 ======
 
