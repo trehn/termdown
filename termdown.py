@@ -136,9 +136,9 @@ def format_seconds_alt(seconds, start, hide_seconds=False):
         if actual_period_value > 0:
             output += str(actual_period_value).zfill(2) + ":"
         elif start > period_seconds or total_seconds > period_seconds:
-            output += "00:"
+            output += "00 : "
         seconds = seconds % period_seconds
-    return output.rstrip(":")
+    return output.rstrip(" : ")
 
 
 def graceful_ctrlc(func):
