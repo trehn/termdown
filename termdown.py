@@ -130,6 +130,8 @@ def format_seconds_alt(seconds, start, hide_seconds=False):
         60,
         1,
     ):
+        if hide_seconds and period_seconds == 1 and total_seconds > 60:
+            break
         actual_period_value = int(seconds / period_seconds)
         if actual_period_value > 0:
             output += str(actual_period_value).zfill(2) + ":"
