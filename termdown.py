@@ -34,7 +34,7 @@ from pyfiglet import CharNotPrinted, Figlet
 click.disable_unicode_literals_warning = True
 
 DEFAULT_FONT = "univers"
-DEFAULT_TIME_FORMAT = "%H:%M:%S"
+DEFAULT_TIME_FORMAT = "%H:%M:%S"  # --no-seconds expects this to end with :%S
 TIMEDELTA_REGEX = re.compile(r'((?P<years>\d+)y ?)?'
                              r'((?P<days>\d+)d ?)?'
                              r'((?P<hours>\d+)h ?)?'
@@ -287,7 +287,7 @@ def countdown(
     no_figlet=False,
     no_window_title=False,
     time=False,
-    time_format=DEFAULT_TIME_FORMAT,
+    time_format=None,
     **kwargs
 ):
     try:
@@ -507,7 +507,7 @@ def stopwatch(
     outfile=None,
     no_window_title=False,
     time=False,
-    time_format=DEFAULT_TIME_FORMAT,
+    time_format=None,
     **kwargs
 ):
     curses_lock, input_queue, quit_event = setup(stdscr)
@@ -650,7 +650,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
               help="Quit N seconds after countdown (use with -b or -t) "
                    "or terminate stopwatch after N seconds")
 @click.option("-s", "--no-seconds", default=False, is_flag=True,
-              help="Don't show seconds until last minute")
+              help="Don't show seconds (except for last minute of countdown "
+                   "and first minute of stopwatch)")
 @click.option("-t", "--text",
               help="Text to display at end of countdown")
 @click.option("-T", "--title",
@@ -673,8 +674,9 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
               help="Show version and exit")
 @click.option("-z", "--time", default=False, is_flag=True,
               help="Show current time instead of countdown/stopwatch")
-@click.option("-Z", "--time-format", default=DEFAULT_TIME_FORMAT,
-              help="Format for --time (defaults to \"{}\")".format(DEFAULT_TIME_FORMAT))
+@click.option("-Z", "--time-format", default=None,
+              help="Format for --time (defaults to \"{}\", "
+                   "ignores --no-seconds)".format(DEFAULT_TIME_FORMAT))
 @click.argument('timespec', metavar="[TIME]", required=False)
 def main(**kwargs):
     """
@@ -691,6 +693,10 @@ def main(**kwargs):
     \tSPACE\tPause (will delay absolute TIME)
     \tQ\tQuit
     """
+    if kwargs['time_format'] is None:
+        kwargs['time_format'] = \
+                DEFAULT_TIME_FORMAT[:-3] if kwargs['no_seconds'] else DEFAULT_TIME_FORMAT
+
     if kwargs['timespec']:
         curses.wrapper(countdown, **kwargs)
     else:

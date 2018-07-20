@@ -25,7 +25,8 @@ Options:
                            (except per-second ones)
   -q, --quit-after N       Quit N seconds after countdown (use with -b or -t)
                            or terminate stopwatch after N seconds
-  -s, --no-seconds         Don't show seconds until last minute
+  -s, --no-seconds         Don't show seconds (except for last minute of
+                           countdown and first minute of stopwatch)
   -t, --text TEXT          Text to display at end of countdown
   -T, --title TEXT         Text to display on top of countdown/stopwatch
   -W, --no-window-title    Don't update terminal title with remaining/elapsed
@@ -41,7 +42,8 @@ Options:
                            -t)
   --version                Show version and exit
   -z, --time               Show current time instead of countdown/stopwatch
-  -Z, --time-format TEXT   Format for --time (defaults to "%H:%M:%S")
+  -Z, --time-format TEXT   Format for --time (defaults to "%H:%M:%S", ignores
+                           --no-seconds)
   --help                   Show this message and exit
 ```
 
