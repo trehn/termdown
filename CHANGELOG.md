@@ -1,3 +1,11 @@
+1.14.1
+======
+
+2018-07-20
+
+* fixed `--no-seconds` not playing nice with `--time` and `--alt-format`
+
+
 1.14.0
 ======
 
