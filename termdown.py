@@ -30,6 +30,7 @@ from dateutil import tz
 from dateutil.parser import parse
 from pyfiglet import CharNotPrinted, Figlet
 
+from subprocess import call
 
 click.disable_unicode_literals_warning = True
 
@@ -286,6 +287,7 @@ def countdown(
     no_text_magic=True,
     no_figlet=False,
     no_window_title=False,
+    no_notify=True,
     time=False,
     time_format=None,
     **kwargs
@@ -297,6 +299,7 @@ def countdown(
     curses_lock, input_queue, quit_event = setup(stdscr)
     figlet = Figlet(font=font)
 
+    title_text = title
     if title and not no_figlet:
         try:
             title = figlet.renderText(title)
@@ -431,6 +434,9 @@ def countdown(
                 if outfile:
                     with open(outfile, 'w') as f:
                         f.write("{}\n{}\n".format(text if text else "DONE", 0))
+
+                if text and not no_notify:
+                    call(['notify-send', '-t', '0', title_text or 'termdown', text])
 
                 rendered_text = text
 
@@ -643,6 +649,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
               help="Draw final N seconds in red (defaults to 3)")
 @click.option("-f", "--font", default=DEFAULT_FONT, metavar="FONT",
               help="Choose from http://www.figlet.org/examples.html")
+@click.option("--no-notify", default=False, is_flag=True,
+              help="Do not send notification to the desktop when done")
 @click.option("-p", "--voice-prefix", metavar="TEXT",
               help="Add TEXT to the beginning of --voice announciations "
                    "(except per-second ones)")
