@@ -257,6 +257,13 @@ def print_version(ctx, param, value):
     click.echo(VERSION)
     ctx.exit()
 
+def verify_stopwatch_laps(ctx, param, value):
+    def parse_lap(s):
+        seconds = int(s) if s.isdigit() else parse_timedelta(s)
+        if not seconds:
+            raise click.BadParameter("Invalid lap time '{}'".format(s))
+        return seconds
+    return map(parse_lap, value.split(","))
 
 def verify_outfile(ctx, param, value):
     if value:
@@ -503,6 +510,7 @@ def stopwatch(
     no_figlet=False,
     no_seconds=False,
     quit_after=None,
+    stopwatch_laps=None,
     title=None,
     outfile=None,
     no_window_title=False,
@@ -528,8 +536,13 @@ def stopwatch(
     try:
         sync_start = datetime.now()
         pause_start = None
-        seconds_elapsed = 0
-        laps = []
+        if stopwatch_laps is None:
+            seconds_elapsed = 0
+            laps = []
+        else:
+            seconds_elapsed = stopwatch_laps[-1]
+            sync_start += timedelta(seconds=-seconds_elapsed)
+            laps = stopwatch_laps[:-1]
         while quit_after is None or seconds_elapsed < int(quit_after):
             figlet.width = stdscr.getmaxyx()[1]
             if time:
@@ -652,6 +665,9 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 @click.option("-s", "--no-seconds", default=False, is_flag=True,
               help="Don't show seconds (except for last minute of countdown "
                    "and first minute of stopwatch)")
+@click.option("-S", "--stopwatch-laps", metavar="TIMES", callback=verify_stopwatch_laps,
+              help="Start the stopwatch with the given comma-separated lap times (e.g. '20m,1h15m30s,30'). "
+                   "The last time specifies the time for the current lap.")
 @click.option("-t", "--text",
               help="Text to display at end of countdown")
 @click.option("-T", "--title",
