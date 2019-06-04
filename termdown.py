@@ -280,6 +280,8 @@ def countdown(
     title=None,
     voice=None,
     voice_prefix=None,
+    voice_cmd=None,
+    exec_shell=None,
     outfile=None,
     no_bell=False,
     no_seconds=False,
@@ -347,17 +349,24 @@ def countdown(
                         )
                     except CharNotPrinted:
                         draw_text(stdscr, "E")
-            if voice_cmd:
-                announciation = None
-                if seconds_left <= critical:
-                    announciation = str(seconds_left)
-                elif seconds_left in (5, 10, 20, 30, 60):
-                    announciation = "{} {} seconds".format(voice_prefix, seconds_left)
-                elif seconds_left in (300, 600, 1800):
-                    announciation = "{} {} minutes".format(voice_prefix, int(seconds_left / 60))
-                elif seconds_left == 3600:
-                    announciation = "{} one hour".format(voice_prefix)
-                if announciation:
+            announciation = None
+            if seconds_left <= critical:
+                announciation = str(seconds_left)
+            elif seconds_left in (5, 10, 20, 30, 60):
+                announciation = "{} {} seconds".format(voice_prefix, seconds_left)
+            elif seconds_left in (300, 600, 1800):
+                announciation = "{} {} minutes".format(voice_prefix, int(seconds_left / 60))
+            elif seconds_left == 3600:
+                announciation = "{} one hour".format(voice_prefix)
+            if announciation or exec_shell:
+                if exec_shell:
+                    Popen(' '.join([exec_shell, "%s" % seconds_left]),
+                        stdout=DEVNULL,
+                        stderr=STDOUT,
+                        shell=True,
+                    )
+
+                if voice_cmd:
                     Popen(
                         [voice_cmd, "-v", voice, announciation.strip()],
                         stdout=DEVNULL,
@@ -665,6 +674,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
                    "choose VOICE from `say -v '?'` or `espeak --voices`)")
 @click.option("-o", "--outfile", metavar="PATH", callback=verify_outfile,
               help="File to write current remaining/elapsed time to")
+@click.option("--exec-shell", metavar="EXEC",
+              help="Runs shell expression on announcement")
 @click.option("--no-figlet", default=False, is_flag=True,
               help="Don't use ASCII art for display")
 @click.option("--no-text-magic", default=False, is_flag=True,
