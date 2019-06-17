@@ -396,6 +396,7 @@ def countdown(
                                 countdown_text if no_figlet else figlet.renderText(countdown_text),
                                 color=3,
                                 fallback=countdown_text,
+                                title=title,
                             )
                         except CharNotPrinted:
                             draw_text(stdscr, "E")
