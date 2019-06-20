@@ -35,6 +35,7 @@ setup(
         "click >= 2.0",
         "pyfiglet >= 0.7",
         "python-dateutil",
+        "windows-curses ; platform_system=='Windows'",
     ],
     py_modules=['termdown'],
     entry_points={
