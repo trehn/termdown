@@ -1,3 +1,28 @@
+1.15.0
+======
+
+2019-06-17
+
+* added `--exec-cmd`
+
+
+1.14.1
+======
+
+2018-07-20
+
+* fixed `--no-seconds` not playing nice with `--time` and `--alt-format`
+
+
+1.14.0
+======
+
+2018-07-15
+
+* added `--time` and `--time-format`
+* added `--no-bell`
+
+
 1.13.0
 ======
 
