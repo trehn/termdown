@@ -1,3 +1,12 @@
+1.16.0
+======
+
+2019-07-25
+
+* added + hotkey
+* now works on Windows
+
+
 1.15.0
 ======
 

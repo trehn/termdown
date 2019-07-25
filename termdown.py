@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-VERSION = "1.15.0"
+VERSION = "1.16.0"
 
 import curses
 from datetime import datetime, timedelta
