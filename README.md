@@ -13,6 +13,7 @@ Usage: termdown [OPTIONS] [TIME]
       L       Lap (stopwatch mode only)
       R       Reset
       SPACE   Pause (will delay absolute TIME)
+      +       Plus (will add 10 seconds)
       Q       Quit
 
 Options:
