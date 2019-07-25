@@ -44,6 +44,7 @@ INPUT_PAUSE = 1
 INPUT_RESET = 2
 INPUT_EXIT = 3
 INPUT_LAP = 4
+INPUT_PLUS = 5
 
 
 def setup(stdscr):
@@ -421,6 +422,8 @@ def countdown(
                     sync_start, target = parse_timestr(timespec)
                     seconds_left = int(ceil((target - datetime.now()).total_seconds()))
                     continue
+                elif input_action == INPUT_PLUS:
+                    target += timedelta(seconds=10)
                 elif input_action == INPUT_LAP:
                     continue
 
@@ -628,6 +631,8 @@ def stopwatch(
                     sync_start = datetime.now()
                     laps = []
                     seconds_elapsed = 0
+                elif input_action == INPUT_PLUS:
+                    sync_start -= timedelta(seconds=10)
                 elif input_action == INPUT_LAP:
                     if pause_start:
                         sync_start += (datetime.now() - pause_start)
@@ -662,6 +667,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
             input_queue.put(INPUT_RESET)
         elif key in ("l", "L"):
             input_queue.put(INPUT_LAP)
+        elif key == "+":
+            input_queue.put(INPUT_PLUS)
         sleep(0.01)
 
 
@@ -730,6 +737,7 @@ def main(**kwargs):
     \tL\tLap (stopwatch mode only)
     \tR\tReset
     \tSPACE\tPause (will delay absolute TIME)
+    \t+\tPlus (will add 10 seconds)
     \tQ\tQuit
     """
     if kwargs['time_format'] is None:
