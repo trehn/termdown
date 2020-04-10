@@ -1,25 +1,15 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 VERSION = "1.16.0"
 
 import curses
 from datetime import datetime, timedelta
 from functools import wraps
 from math import ceil
-try:
-    from queue import Empty, Queue
-except ImportError:
-    from Queue import Empty, Queue
+from queue import Empty, Queue
 import re
 import os
 from os.path import abspath, dirname
-from subprocess import Popen, STDOUT
-try:
-    from subprocess import DEVNULL
-except ImportError:  # Python 2
-    DEVNULL = open(os.devnull, 'wb')
+from subprocess import DEVNULL, Popen, STDOUT
 from sys import exit, stderr, stdout
 from threading import Event, Lock, Thread
 from time import sleep
@@ -30,8 +20,6 @@ from dateutil import tz
 from dateutil.parser import parse
 from pyfiglet import CharNotPrinted, Figlet
 
-
-click.disable_unicode_literals_warning = True
 
 DEFAULT_FONT = "univers"
 DEFAULT_TIME_FORMAT = "%H:%M:%S"  # --no-seconds expects this to end with :%S
