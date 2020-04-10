@@ -1,3 +1,12 @@
+1.17.0
+======
+
+2020-04-10
+
+* removed support for Python 2
+* added - hotkey
+
+
 1.16.0
 ======
 

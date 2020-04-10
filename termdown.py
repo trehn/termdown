@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-VERSION = "1.16.0"
+VERSION = "1.17.0"
 
 import curses
 from datetime import datetime, timedelta
