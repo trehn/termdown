@@ -14,6 +14,7 @@ Usage: termdown [OPTIONS] [TIME]
       R       Reset
       SPACE   Pause (will delay absolute TIME)
       +       Plus (will add 10 seconds)
+      -       Minus (will subtract 10 seconds)
       Q       Quit
 
 Options:
