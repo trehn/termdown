@@ -57,29 +57,31 @@ def setup(stdscr):
     return (curses_lock, input_queue, quit_event)
 
 
-def draw_text(stdscr, text, color=0, fallback=None, title=None):
+def draw_text(stdscr, text, color=0, fallback=None, title=None, no_figlet_y_offset=-1):
     """
     Draws text in the given color. Duh.
     """
     if fallback is None:
         fallback = text
     y, x = stdscr.getmaxyx()
+    effective_y = (y if no_figlet_y_offset < 0 else 1)
+    y_delta = (0 if no_figlet_y_offset < 0 else no_figlet_y_offset)
     if title:
         title = pad_to_size(title, x, 1)
         if "\n" in title.rstrip("\n"):
             # hack to get more spacing between title and body for figlet
             title += "\n" * 5
         text = title + "\n" + pad_to_size(text, x, len(text.split("\n")))
-    lines = pad_to_size(text, x, y).rstrip("\n").split("\n")
+    lines = pad_to_size(text, x, effective_y).rstrip("\n").split("\n")
 
     try:
         for i, line in enumerate(lines):
-            stdscr.insstr(i, 0, line, curses.color_pair(color))
+            stdscr.insstr(i + y_delta, 0, line, curses.color_pair(color))
     except:
-        lines = pad_to_size(fallback, x, y).rstrip("\n").split("\n")
+        lines = pad_to_size(fallback, x, effective_y).rstrip("\n").split("\n")
         try:
             for i, line in enumerate(lines[:]):
-                stdscr.insstr(i, 0, line, curses.color_pair(color))
+                stdscr.insstr(i + y_delta, 0, line, curses.color_pair(color))
         except:
             pass
     stdscr.refresh()
@@ -276,6 +278,7 @@ def countdown(
     no_seconds=False,
     no_text_magic=True,
     no_figlet=False,
+    no_figlet_y_offset=-1,
     no_window_title=False,
     time=False,
     time_format=None,
@@ -287,6 +290,8 @@ def countdown(
         raise click.BadParameter("Unable to parse TIME value '{}'".format(timespec))
     curses_lock, input_queue, quit_event = setup(stdscr)
     figlet = Figlet(font=font)
+    if not no_figlet:
+        no_figlet_y_offset = -1
 
     if title and not no_figlet:
         try:
@@ -336,6 +341,7 @@ def countdown(
                             color=1 if seconds_left <= critical else 0,
                             fallback=title + "\n" + countdown_text if title else countdown_text,
                             title=title,
+                            no_figlet_y_offset=no_figlet_y_offset,
                         )
                     except CharNotPrinted:
                         draw_text(stdscr, "E")
@@ -397,6 +403,7 @@ def countdown(
                                 color=3,
                                 fallback=countdown_text,
                                 title=title,
+                                no_figlet_y_offset=no_figlet_y_offset,
                             )
                         except CharNotPrinted:
                             draw_text(stdscr, "E")
@@ -460,6 +467,7 @@ def countdown(
                                     rendered_text,
                                     color=base_color if flip else 4,
                                     fallback=text,
+                                    no_figlet_y_offset=no_figlet_y_offset,
                                 )
                             else:
                                 draw_text(stdscr, "", color=base_color if flip else 4)
@@ -508,6 +516,7 @@ def stopwatch(
     exec_cmd=None,
     font=DEFAULT_FONT,
     no_figlet=False,
+    no_figlet_y_offset=-1,
     no_seconds=False,
     quit_after=None,
     title=None,
@@ -521,6 +530,8 @@ def stopwatch(
     curses_lock, input_queue, quit_event = setup(stdscr)
     figlet = Figlet(font=font)
 
+    if not no_figlet:
+        no_figlet_y_offset = -1
     if title and not no_figlet:
         try:
             title = figlet.renderText(title)
@@ -559,6 +570,7 @@ def stopwatch(
                         stopwatch_text if no_figlet else figlet.renderText(stopwatch_text),
                         fallback=stopwatch_text,
                         title=title,
+                        no_figlet_y_offset=no_figlet_y_offset,
                     )
                 except CharNotPrinted:
                     draw_text(stdscr, "E")
@@ -606,6 +618,7 @@ def stopwatch(
                                 color=3,
                                 fallback=stopwatch_text,
                                 title=title,
+                                no_figlet_y_offset=no_figlet_y_offset,
                             )
                         except CharNotPrinted:
                             draw_text(stdscr, "E")
@@ -708,6 +721,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
                    "use: --exec-cmd \"if [ '{0}' == '5' ]; then say -v Alex {1}; fi\"")
 @click.option("--no-figlet", default=False, is_flag=True,
               help="Don't use ASCII art for display")
+@click.option("--no-figlet-y-offset", default=-1,
+              help="Vertical offset within the terminal (only for --no-figlet)")
 @click.option("--no-text-magic", default=False, is_flag=True,
               help="Don't try to replace non-ASCII characters (use with -t)")
 @click.option("--version", is_flag=True, callback=print_version,
