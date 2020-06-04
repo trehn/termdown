@@ -301,7 +301,7 @@ def countdown(
 
     voice_cmd = None
     if voice:
-        for cmd in ("/usr/bin/say", "/usr/bin/espeak"):
+        for cmd in ("/usr/bin/say", "/usr/bin/espeak", "/usr/bin/espeak-ng"):
             if os.path.exists(cmd):
                 voice_cmd = cmd
                 break
