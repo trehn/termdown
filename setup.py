@@ -5,7 +5,7 @@ except ImportError:
 
 setup(
     name="termdown",
-    version="1.15.0",
+    version="1.17.0",
     description="Countdown timer for your terminal",
     author="Torsten Rehn",
     author_email="torsten@rehn.email",
@@ -27,7 +27,6 @@ setup(
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: POSIX",
         "Operating System :: Unix",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Topic :: Utilities",
     ],
@@ -35,6 +34,7 @@ setup(
         "click >= 2.0",
         "pyfiglet >= 0.7",
         "python-dateutil",
+        "windows-curses ; platform_system=='Windows'",
     ],
     py_modules=['termdown'],
     entry_points={
