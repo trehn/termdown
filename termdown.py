@@ -14,6 +14,7 @@ from sys import exit, stderr, stdout
 from threading import Event, Lock, Thread
 from time import sleep
 import unicodedata
+import i18n
 
 import click
 from dateutil import tz
@@ -282,6 +283,7 @@ def countdown(
     no_window_title=False,
     time=False,
     time_format=None,
+    voice_language=None,
     **kwargs
 ):
     try:
@@ -305,6 +307,12 @@ def countdown(
             if os.path.exists(cmd):
                 voice_cmd = cmd
                 break
+        i18n.set('fallback', 'en')
+        i18n.add_translation('{} seconds', '{} Sekunden', locale='de')
+        i18n.add_translation('{} seconds', '{} secondes', locale='fr')
+        i18n.add_translation('{} minutes', '{} Minuten', locale='de')
+        i18n.add_translation('one hour', 'Eine Stunde', locale='de')
+        i18n.add_translation('one hour', 'une heure', locale='fr')
     if voice or exec_cmd:
         voice_prefix = voice_prefix or ""
 
@@ -349,11 +357,11 @@ def countdown(
             if seconds_left <= critical:
                 annunciation = str(seconds_left)
             elif seconds_left in (5, 10, 20, 30, 60):
-                annunciation = "{} {} seconds".format(voice_prefix, seconds_left)
+                annunciation = "{} {}".format(voice_prefix, i18n.t("{} seconds", locale=voice_language).format(seconds_left))
             elif seconds_left in (300, 600, 1800):
-                annunciation = "{} {} minutes".format(voice_prefix, int(seconds_left / 60))
+                annunciation = "{} {}".format(voice_prefix, i18n.t("{} minutes", locale=voice_language).format(int(seconds_left / 60)))
             elif seconds_left == 3600:
-                annunciation = "{} one hour".format(voice_prefix)
+                annunciation = "{} {}".format(voice_prefix, i18n.t("one hour", locale=voice_language))
             if annunciation or exec_cmd:
                 if exec_cmd:
                     Popen(
@@ -692,6 +700,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
                    "or --exec-cmd (defaults to 3)")
 @click.option("-f", "--font", default=DEFAULT_FONT, metavar="FONT",
               help="Choose from http://www.figlet.org/examples.html")
+@click.option("-l", "--voice-language", metavar="LANG",
+              help="Language for voice")
 @click.option("-p", "--voice-prefix", metavar="TEXT",
               help="Add TEXT to the beginning of --voice and --exec annunciations "
                    "(except per-second ones)")

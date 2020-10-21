@@ -32,6 +32,7 @@ setup(
     ],
     install_requires=[
         "click >= 2.0",
+        "i18n >= 0.2",
         "pyfiglet >= 0.7",
         "python-dateutil",
         "windows-curses ; platform_system=='Windows'",

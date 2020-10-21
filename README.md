@@ -41,6 +41,7 @@ Options:
                                 requires `espeak` on Linux or `say` on macOS;
                                 choose VOICE from `say -v '?'` or `espeak
                                 --voices`)
+  -l, --voice-language LANG     Language for voice
   -o, --outfile PATH            File to write current remaining/elapsed time
                                 to
   --exec-cmd CMD                Runs CMD every second. '{0}' and '{1}' in CMD
