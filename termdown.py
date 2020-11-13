@@ -58,7 +58,7 @@ def setup(stdscr):
     return (curses_lock, input_queue, quit_event)
 
 
-def draw_text(stdscr, text, color=0, fallback=None, title=None, no_figlet_y_offset=-1):
+def draw_text(stdscr, text, color=0, fallback=None, title=None, no_figlet_y_offset=-1, end=None):
     """
     Draws text in the given color. Duh.
     """
@@ -73,6 +73,9 @@ def draw_text(stdscr, text, color=0, fallback=None, title=None, no_figlet_y_offs
             # hack to get more spacing between title and body for figlet
             title += "\n" * 5
         text = title + "\n" + pad_to_size(text, x, len(text.split("\n")))
+    if end:
+        end = pad_to_size(end, x, 1)
+        text = pad_to_size(text, x, len(text.split("\n"))) + "\n" + end
     lines = pad_to_size(text, x, effective_y).rstrip("\n").split("\n")
 
     try:
@@ -132,6 +135,15 @@ def format_seconds_alt(seconds, start, hide_seconds=False):
             output += "00:"
         seconds = seconds % period_seconds
     return output.rstrip(":")
+
+
+def format_target(target, time_format, date_format):
+    """
+    Returns a human-readable string representation of the countdown's target
+    datetime
+    """
+    fmt = f'{date_format} {time_format}' if datetime.now().date() != target.date() else time_format  # Only include date if countdown ends on a day that isn't today
+    return f'Ends at {target.strftime(fmt)}'
 
 
 def graceful_ctrlc(func):
@@ -271,6 +283,7 @@ def countdown(
     text=None,
     timespec=None,
     title=None,
+    end=None,
     voice=None,
     voice_prefix=None,
     exec_cmd=None,
@@ -343,6 +356,7 @@ def countdown(
                             color=1 if seconds_left <= critical else 0,
                             fallback=title + "\n" + countdown_text if title else countdown_text,
                             title=title,
+                            end=end and format_target(target, time_format=time_format, date_format=date_format),
                             no_figlet_y_offset=no_figlet_y_offset,
                         )
                     except CharNotPrinted:
@@ -692,6 +706,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 @click.option("-c", "--critical", default=3, metavar="N",
               help="Draw final N seconds in red and announce them individually with --voice "
                    "or --exec-cmd (defaults to 3)")
+@click.option("-e", "--end", default=False, is_flag=True,
+              help="Display target datetime of unpaused countdown")
 @click.option("-f", "--font", default=DEFAULT_FONT, metavar="FONT",
               help="Choose from http://www.figlet.org/examples.html")
 @click.option("-p", "--voice-prefix", metavar="TEXT",
@@ -733,7 +749,7 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 @click.option("-z", "--time", default=False, is_flag=True,
               help="Show current time instead of countdown/stopwatch")
 @click.option("-Z", "--time-format", default=None,
-              help="Format for --time (defaults to \"{}\", "
+              help="Format for --time/--end (defaults to \"{}\", "
                    "ignores --no-seconds)".format(DEFAULT_TIME_FORMAT))
 @click.option("-D", "--date-format", default=None,
               help="Format for --end (defaults to \"{}\")".format(DEFAULT_DATE_FORMAT))
