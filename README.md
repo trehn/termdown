@@ -60,6 +60,7 @@ Options:
                                 countdown/stopwatch
   -Z, --time-format TEXT        Format for --time (defaults to "%H:%M:%S",
                                 ignores --no-seconds)
+  -D, --date-format TEXT        Format for --end (defaults to "%Y-%m-%d")
   --help                        Show this message and exit.
 ```
 

@@ -23,6 +23,7 @@ from pyfiglet import CharNotPrinted, Figlet
 
 DEFAULT_FONT = "univers"
 DEFAULT_TIME_FORMAT = "%H:%M:%S"  # --no-seconds expects this to end with :%S
+DEFAULT_DATE_FORMAT = "%Y-%m-%d"
 TIMEDELTA_REGEX = re.compile(r'((?P<years>\d+)y ?)?'
                              r'((?P<days>\d+)d ?)?'
                              r'((?P<hours>\d+)h ?)?'
@@ -282,6 +283,7 @@ def countdown(
     no_window_title=False,
     time=False,
     time_format=None,
+    date_format=None,
     **kwargs
 ):
     try:
@@ -733,6 +735,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 @click.option("-Z", "--time-format", default=None,
               help="Format for --time (defaults to \"{}\", "
                    "ignores --no-seconds)".format(DEFAULT_TIME_FORMAT))
+@click.option("-D", "--date-format", default=None,
+              help="Format for --end (defaults to \"{}\")".format(DEFAULT_DATE_FORMAT))
 @click.argument('timespec', metavar="[TIME]", required=False)
 def main(**kwargs):
     """
@@ -754,6 +758,8 @@ def main(**kwargs):
     if kwargs['time_format'] is None:
         kwargs['time_format'] = \
                 DEFAULT_TIME_FORMAT[:-3] if kwargs['no_seconds'] else DEFAULT_TIME_FORMAT
+    if kwargs['date_format'] is None:
+        kwargs['date_format'] = DEFAULT_DATE_FORMAT
 
     if kwargs['timespec']:
         curses.wrapper(countdown, **kwargs)
