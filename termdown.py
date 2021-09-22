@@ -288,6 +288,12 @@ def countdown(
         sync_start, target = parse_timestr(timespec)
     except ValueError:
         raise click.BadParameter("Unable to parse TIME value '{}'".format(timespec))
+        
+    if target < datetime.now():
+        basis_seconds = (datetime.now().replace(microsecond=0)-target.replace(microsecond=0)).total_seconds()
+        stopwatch(**locals())
+        return    
+        
     curses_lock, input_queue, quit_event = setup(stdscr)
     figlet = Figlet(font=font)
     if not no_figlet:
@@ -529,6 +535,11 @@ def stopwatch(
 ):
     curses_lock, input_queue, quit_event = setup(stdscr)
     figlet = Figlet(font=font)
+    
+    #basis_seconds is set if counting up from the past
+    basis_seconds = kwargs.get('basis_seconds', 0)
+    basis_delta = timedelta(seconds=basis_seconds) #needed to keep the sleep target straight
+
 
     if not no_figlet:
         no_figlet_y_offset = -1
@@ -547,7 +558,7 @@ def stopwatch(
     try:
         sync_start = datetime.now()
         pause_start = None
-        seconds_elapsed = 0
+        seconds_elapsed = 0 + basis_seconds
         laps = []
         while quit_after is None or seconds_elapsed < int(quit_after):
             figlet.width = stdscr.getmaxyx()[1]
@@ -593,7 +604,7 @@ def stopwatch(
                     stderr=STDOUT,
                     shell=True,
                 )
-            sleep_target = sync_start + timedelta(seconds=seconds_elapsed + 1)
+            sleep_target = sync_start + timedelta(seconds=seconds_elapsed + 1) - basis_delta #subtract if counting up from the past
             if time:
                 sleep_target = sleep_target.replace(microsecond=0)
             now = datetime.now()
@@ -646,7 +657,7 @@ def stopwatch(
                     laps.append((datetime.now() - sync_start).total_seconds())
                     sync_start = datetime.now()
                     seconds_elapsed = 0
-            seconds_elapsed = int((datetime.now() - sync_start).total_seconds())
+            seconds_elapsed = int((datetime.now() - sync_start).total_seconds()) + basis_seconds
     finally:
         with curses_lock:
             if not no_window_title:
