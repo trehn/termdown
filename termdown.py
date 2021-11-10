@@ -35,6 +35,7 @@ INPUT_EXIT = 3
 INPUT_LAP = 4
 INPUT_PLUS = 5
 INPUT_MINUS = 6
+INPUT_END = 7
 
 
 def setup(stdscr):
@@ -142,8 +143,11 @@ def format_target(target, time_format, date_format):
     Returns a human-readable string representation of the countdown's target
     datetime
     """
-    fmt = f'{date_format} {time_format}' if datetime.now().date() != target.date() else time_format  # Only include date if countdown ends on a day that isn't today
-    return f'Ends at {target.strftime(fmt)}'
+    if datetime.now().date() != target.date():
+        fmt = "{} {}".format(date_format, time_format)
+    else:
+        fmt = time_format
+    return target.strftime(fmt)
 
 
 def graceful_ctrlc(func):
@@ -310,12 +314,6 @@ def countdown(
     if not no_figlet:
         no_figlet_y_offset = -1
 
-    if title and not no_figlet:
-        try:
-            title = figlet.renderText(title)
-        except CharNotPrinted:
-            title = ""
-
     voice_cmd = None
     if voice:
         for cmd in ("/usr/bin/say", "/usr/bin/espeak", "/usr/bin/espeak-ng"):
@@ -351,14 +349,24 @@ def countdown(
                         with open(outfile, 'w') as f:
                             f.write("{}\n{}\n".format(countdown_text, seconds_left))
                     stdscr.erase()
+                    end_text = format_target(
+                        target,
+                        time_format=time_format,
+                        date_format=date_format,
+                    ) if end else None
+                    fallback = countdown_text
+                    if title:
+                        fallback = title + "\n" + fallback
+                    if end:
+                        fallback = fallback + "\n" + end_text
                     try:
                         draw_text(
                             stdscr,
                             countdown_text if no_figlet else figlet.renderText(countdown_text),
                             color=1 if seconds_left <= critical else 0,
-                            fallback=title + "\n" + countdown_text if title else countdown_text,
-                            title=title,
-                            end=end and format_target(target, time_format=time_format, date_format=date_format),
+                            fallback=fallback,
+                            title=title if no_figlet or not title else figlet.renderText(title),
+                            end=end_text,
                             no_figlet_y_offset=no_figlet_y_offset,
                         )
                     except CharNotPrinted:
@@ -420,16 +428,15 @@ def countdown(
                                 countdown_text if no_figlet else figlet.renderText(countdown_text),
                                 color=3,
                                 fallback=countdown_text,
-                                title=title,
+                                title=title if no_figlet or not title else figlet.renderText(title),
                                 no_figlet_y_offset=no_figlet_y_offset,
                             )
                         except CharNotPrinted:
                             draw_text(stdscr, "E")
                     input_action = input_queue.get()
-                    if input_action == INPUT_PAUSE:
-                        time_paused = datetime.now() - pause_start
-                        sync_start += time_paused
-                        target += time_paused
+                    time_paused = datetime.now() - pause_start
+                    sync_start += time_paused
+                    target += time_paused
                 if input_action == INPUT_EXIT:  # no elif here! input_action may have changed
                     raise KeyboardInterrupt
                 elif input_action == INPUT_RESET:
@@ -442,7 +449,8 @@ def countdown(
                     target -= timedelta(seconds=10)
                 elif input_action == INPUT_LAP:
                     continue
-
+                elif input_action == INPUT_END:
+                    end = not end
             sync_start = sleep_target
 
             seconds_left = int(ceil((target - datetime.now()).total_seconds()))
@@ -687,6 +695,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
             input_queue.put(INPUT_EXIT)
         elif key == " ":
             input_queue.put(INPUT_PAUSE)
+        elif key in ("e", "E"):
+            input_queue.put(INPUT_END)
         elif key in ("r", "R"):
             input_queue.put(INPUT_RESET)
         elif key in ("l", "L"):
@@ -759,13 +769,14 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 def main(**kwargs):
     """
     \b
-    Starts a countdown to or from TIME. Example values for TIME:
+    Starts a countdown to TIME. Example values for TIME:
     10, '1h 5m 30s', '12:00', '2020-01-01', '2020-01-01 14:00 UTC'.
     \b
     If TIME is not given, termdown will operate in stopwatch mode
     and count forward.
     \b
     Hotkeys:
+    \tE\tShow end time (countdown mode only)
     \tL\tLap (stopwatch mode only)
     \tR\tReset
     \tSPACE\tPause (will delay absolute TIME)
