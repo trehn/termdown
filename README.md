@@ -24,6 +24,7 @@ Options:
   -c, --critical N              Draw final N seconds in red and announce them
                                 individually with --voice or --exec-cmd
                                 (defaults to 3)
+  -e, --end                     Display target datetime of unpaused countdown
   -f, --font FONT               Choose from
                                 http://www.figlet.org/examples.html
   -p, --voice-prefix TEXT       Add TEXT to the beginning of --voice and
@@ -60,6 +61,7 @@ Options:
                                 countdown/stopwatch
   -Z, --time-format TEXT        Format for --time (defaults to "%H:%M:%S",
                                 ignores --no-seconds)
+  -D, --date-format TEXT        Format for --end (defaults to "%Y-%m-%d")
   --help                        Show this message and exit.
 ```
 
