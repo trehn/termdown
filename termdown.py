@@ -439,6 +439,8 @@ def countdown(
                     target += time_paused
                 if input_action == INPUT_EXIT:  # no elif here! input_action may have changed
                     raise KeyboardInterrupt
+                elif input_action == INPUT_PAUSE:
+                    continue
                 elif input_action == INPUT_RESET:
                     sync_start, target = parse_timestr(timespec)
                     seconds_left = int(ceil((target - datetime.now()).total_seconds()))
@@ -451,6 +453,7 @@ def countdown(
                     continue
                 elif input_action == INPUT_END:
                     end = not end
+                    continue
             sync_start = sleep_target
 
             seconds_left = int(ceil((target - datetime.now()).total_seconds()))
