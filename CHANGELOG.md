@@ -1,3 +1,16 @@
+1.18.0
+======
+
+2021-11-10
+
+* added `--end` and E hotkey
+* added `--no-figlet-y-offset`
+* added support for `espeak-ng`
+* changed paused text color to blue
+* fixed high CPU usage with `--time`
+* fixed delayed countdown after repeatedly pausing and unpausing
+
+
 1.17.0
 ======
 
