@@ -672,7 +672,10 @@ def stopwatch(
                     laps.append((datetime.now() - sync_start).total_seconds())
                     sync_start = datetime.now()
                     seconds_elapsed = 0
-            seconds_elapsed = int((datetime.now() - sync_start).total_seconds())
+            if time:
+                seconds_elapsed = ceil((datetime.now() - sync_start).total_seconds())
+            else:
+                seconds_elapsed = int((datetime.now() - sync_start).total_seconds())
     finally:
         with curses_lock:
             if not no_window_title:
