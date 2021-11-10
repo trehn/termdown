@@ -288,6 +288,8 @@ def countdown(
         sync_start, target = parse_timestr(timespec)
     except ValueError:
         raise click.BadParameter("Unable to parse TIME value '{}'".format(timespec))
+    if exec_cmd and voice:  # prevent passing both --exec-cmd and --voice
+        raise click.BadParameter("--exec-cmd and --voice are mutually exclusive")
     curses_lock, input_queue, quit_event = setup(stdscr)
     figlet = Figlet(font=font)
     if not no_figlet:
