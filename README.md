@@ -61,6 +61,8 @@ Options:
                                 only, use: --exec-cmd "if [ '{0}' == '5' ];
                                 then say -v Alex {1}; fi"
 
+  -i, --increment TEXT          Increment to add to countdown when resetting
+
   --no-figlet                   Don't use ASCII art for display
   --no-figlet-y-offset INTEGER  Vertical offset within the terminal (only for
                                 --no-figlet)

@@ -216,8 +216,6 @@ def parse_timestr(timestr):
 
     if timedelta_secs:
         target = datetime.now() + timedelta(seconds=timedelta_secs)
-    elif timestr.isdigit():
-        target = datetime.now() + timedelta(seconds=int(timestr))
     else:
         try:
             target = parse(timestr)
@@ -248,6 +246,9 @@ def parse_timedelta(deltastr):
     matches = TIMEDELTA_REGEX.match(deltastr)
     if not matches:
         return None
+    if deltastr.isdigit():
+        return int(deltastr)
+
     components = {}
     for name, value in matches.groupdict().items():
         if value:
@@ -298,6 +299,7 @@ def countdown(
     no_figlet=False,
     no_figlet_y_offset=-1,
     no_window_title=False,
+    increment=None,
     time=False,
     time_format=None,
     date_format=None,
@@ -322,6 +324,8 @@ def countdown(
                 break
     if voice or exec_cmd:
         voice_prefix = voice_prefix or ""
+
+    resets = 0
 
     input_thread = Thread(
         args=(stdscr, input_queue, quit_event, curses_lock),
@@ -443,6 +447,8 @@ def countdown(
                     continue
                 elif input_action == INPUT_RESET:
                     sync_start, target = parse_timestr(timespec)
+                    if increment:
+                        target += timedelta(seconds=(parse_timedelta(increment) * resets))
                     seconds_left = int(ceil((target - datetime.now()).total_seconds()))
                     continue
                 elif input_action == INPUT_PLUS:
@@ -519,7 +525,11 @@ def countdown(
                             return
                         elif input_action == INPUT_RESET:
                             sync_start, target = parse_timestr(timespec)
+                            if increment:
+                                resets += 1
+                                target += timedelta(seconds=(parse_timedelta(increment) * resets))
                             seconds_left = int(ceil((target - datetime.now()).total_seconds()))
+
                             blink_reset = True
                             break
                         slept += (sleep_end - sleep_start).total_seconds()
@@ -755,6 +765,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
                    "remaining/elapsed number of seconds and a more sparse annunciation as in "
                    "--voice, respectively. For example, to get a callout at five seconds only, "
                    "use: --exec-cmd \"if [ '{0}' == '5' ]; then say -v Alex {1}; fi\"")
+@click.option("-i", "--increment", default=None,
+              help="Increment to add to countdown when resetting")
 @click.option("--no-figlet", default=False, is_flag=True,
               help="Don't use ASCII art for display")
 @click.option("--no-figlet-y-offset", default=-1,
