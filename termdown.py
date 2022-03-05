@@ -404,7 +404,7 @@ def countdown(
 
             # If sync_start has microsecond=0, it might happen that we
             # need to skip one frame (the very first one). This occurs
-            # when the program has been startet at, say,
+            # when the program has been started at, say,
             # "2014-05-29 20:27:57.930651". Now suppose rendering the
             # frame took about 0.2 seconds. The real time now is
             # "2014-05-29 20:27:58.130000" and sleep_target is
