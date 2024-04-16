@@ -438,7 +438,7 @@ def countdown(
                     sync_start += time_paused
                     target += time_paused
                 if input_action == INPUT_EXIT:  # no elif here! input_action may have changed
-                    break
+                    exit(1)
                 elif input_action == INPUT_PAUSE:
                     continue
                 elif input_action == INPUT_RESET:
