@@ -292,6 +292,7 @@ def countdown(
     voice_prefix=None,
     exec_cmd=None,
     outfile=None,
+    outfile_keep=False,
     no_bell=False,
     no_seconds=False,
     no_text_magic=True,
@@ -531,7 +532,7 @@ def countdown(
         with curses_lock:
             if not no_window_title:
                 os.write(stdout.fileno(), "\033]2;\007".encode())
-            if outfile:
+            if outfile and not outfile_keep:
                 os.remove(outfile)
         quit_event.set()
         input_thread.join()
@@ -550,6 +551,7 @@ def stopwatch(
     quit_after=None,
     title=None,
     outfile=None,
+    outfile_keep=False,
     no_window_title=False,
     time=False,
     time_format=None,
@@ -683,7 +685,7 @@ def stopwatch(
         with curses_lock:
             if not no_window_title:
                 os.write(stdout.fileno(), "\033]2;\007".encode())
-            if outfile:
+            if outfile and not outfile_keep:
                 os.remove(outfile)
         quit_event.set()
         input_thread.join()
@@ -750,6 +752,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
                    "choose VOICE from `say -v '?'` or `espeak --voices`)")
 @click.option("-o", "--outfile", metavar="PATH", callback=verify_outfile,
               help="File to write current remaining/elapsed time to")
+@click.option("--outfile-keep", default=False, is_flag=True,
+              help="Keep outfile on termdown exit instead of deleting.")
 @click.option("--exec-cmd", metavar="CMD",
               help="Runs CMD every second. '{0}' and '{1}' in CMD will be replaced with the "
                    "remaining/elapsed number of seconds and a more sparse annunciation as in "
