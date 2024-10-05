@@ -49,6 +49,14 @@ Options:
                                 requires `espeak` on Linux or `say` on macOS;
                                 choose VOICE from `say -v '?'` or `espeak
                                 --voices`)
+  -S, --seconds-text TEXT       When --voice or --exec-cmd is set, say TEXT as
+                                the seconds warning
+  -M, --minutes-text TEXT       When --voice or --exec-cmd is set, say TEXT as
+                                the minutes warning
+  -H, --hours-text TEXT         When --voice or --exec-cmd is set, say TEXT as
+                                the hours warning
+  -O, --one-hour-text TEXT      When --voice or --exec-cmd is set, say TEXT as
+                                the one hour warning
 
   -o, --outfile PATH            File to write current remaining/elapsed time
                                 to
