@@ -290,6 +290,10 @@ def countdown(
     end=None,
     voice=None,
     voice_prefix=None,
+    seconds_text=None,
+    minutes_text=None,
+    hours_text=None,
+    one_hour_text=None,
     exec_cmd=None,
     outfile=None,
     no_bell=False,
@@ -320,8 +324,13 @@ def countdown(
             if os.path.exists(cmd):
                 voice_cmd = cmd
                 break
+
     if voice or exec_cmd:
         voice_prefix = voice_prefix or ""
+        seconds_text = seconds_text or "seconds"
+        minutes_text = minutes_text or "minutes"
+        hours_text = hours_text or "hours"
+        one_hour_text = one_hour_text or "one hour"
 
     input_thread = Thread(
         args=(stdscr, input_queue, quit_event, curses_lock),
@@ -375,11 +384,11 @@ def countdown(
             if seconds_left <= critical:
                 annunciation = str(seconds_left)
             elif seconds_left in (5, 10, 20, 30, 60):
-                annunciation = "{} {} seconds".format(voice_prefix, seconds_left)
+                annunciation = "{} {} {}".format(voice_prefix, seconds_left, seconds_text)
             elif seconds_left in (300, 600, 1800):
-                annunciation = "{} {} minutes".format(voice_prefix, int(seconds_left / 60))
+                annunciation = "{} {} {}".format(voice_prefix, int(seconds_left / 60), minutes_text)
             elif seconds_left == 3600:
-                annunciation = "{} one hour".format(voice_prefix)
+                annunciation = "{} {}".format(voice_prefix, one_hour_text)
             if annunciation or exec_cmd:
                 if exec_cmd:
                     Popen(
@@ -609,13 +618,13 @@ def stopwatch(
                 if seconds_elapsed <= critical and seconds_elapsed > 0:
                     annunciation = str(seconds_elapsed)
                 elif seconds_elapsed in (5, 10, 20, 30, 40, 50, 60):
-                    annunciation = "{} {} seconds".format(voice_prefix, seconds_elapsed)
+                    annunciation = "{} {} {}".format(voice_prefix, seconds_elapsed, seconds_text)
                 elif seconds_elapsed in (120, 180, 300, 600, 1800):
-                    annunciation = "{} {} minutes".format(voice_prefix, int(seconds_elapsed / 60))
+                    annunciation = "{} {} {}".format(voice_prefix, int(seconds_elapsed / 60), minutes_text)
                 elif seconds_elapsed == 3600:
-                    annunciation = "{} one hour".format(voice_prefix)
+                    annunciation = "{} {}".format(voice_prefix, one_hour_text)
                 elif seconds_elapsed % 3600 == 0 and seconds_elapsed > 0:
-                    annunciation = "{} {} hours".format(voice_prefix, int(seconds_elapsed / 3600))
+                    annunciation = "{} {} {}".format(voice_prefix, int(seconds_elapsed / 3600), hours_text)
                 Popen(
                     exec_cmd.format(seconds_elapsed, annunciation),
                     stdout=DEVNULL,
@@ -748,6 +757,18 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
                    "(at fixed intervals with per-second annunciations starting at --critical; "
                    "requires `espeak` on Linux or `say` on macOS; "
                    "choose VOICE from `say -v '?'` or `espeak --voices`)")
+@click.option("-S", "--seconds-text", metavar="TEXT",
+              help="When --voice or --exec-cmd is set, say TEXT as the seconds "
+              "warning")
+@click.option("-M", "--minutes-text", metavar="TEXT",
+              help="When --voice or --exec-cmd is set, say TEXT as the minutes "
+              "warning")
+@click.option("-H", "--hours-text", metavar="TEXT",
+              help="When --voice or --exec-cmd is set, say TEXT as the hours "
+              "warning")
+@click.option("-O", "--one-hour-text", metavar="TEXT",
+              help="When --voice or --exec-cmd is set, say TEXT as the one hour "
+              "warning")
 @click.option("-o", "--outfile", metavar="PATH", callback=verify_outfile,
               help="File to write current remaining/elapsed time to")
 @click.option("--exec-cmd", metavar="CMD",
