@@ -269,8 +269,8 @@ def print_version(ctx, param, value):
 
 def verify_outfile(ctx, param, value):
     if value:
-        if os.path.exists(value):
-            raise click.BadParameter("File already exists: {}".format(value))
+        #if os.path.exists(value):
+            #raise click.BadParameter("File already exists: {}".format(value))
         if not os.access(dirname(abspath(value)), os.W_OK):
             raise click.BadParameter("Unable to write file: {}".format(value))
     return value
@@ -287,6 +287,7 @@ def countdown(
     text=None,
     timespec=None,
     title=None,
+    persistent=False,
     end=None,
     voice=None,
     voice_prefix=None,
@@ -550,6 +551,7 @@ def stopwatch(
     quit_after=None,
     title=None,
     outfile=None,
+    persistent=False,
     no_window_title=False,
     time=False,
     time_format=None,
@@ -750,6 +752,8 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
                    "choose VOICE from `say -v '?'` or `espeak --voices`)")
 @click.option("-o", "--outfile", metavar="PATH", callback=verify_outfile,
               help="File to write current remaining/elapsed time to")
+@click.option("-pf", "--persistent", default=False, is_flag=True,
+              help="Keep the output file after the countdown/stopwatch ends")
 @click.option("--exec-cmd", metavar="CMD",
               help="Runs CMD every second. '{0}' and '{1}' in CMD will be replaced with the "
                    "remaining/elapsed number of seconds and a more sparse annunciation as in "
