@@ -1,15 +1,25 @@
 #!/usr/bin/env python
-VERSION = "1.18.0"
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
+VERSION = "1.14.1"
 
 import curses
 from datetime import datetime, timedelta
 from functools import wraps
 from math import ceil
-from queue import Empty, Queue
+try:
+    from queue import Empty, Queue
+except ImportError:
+    from Queue import Empty, Queue
 import re
 import os
 from os.path import abspath, dirname
-from subprocess import DEVNULL, Popen, STDOUT
+from subprocess import Popen, STDOUT
+try:
+    from subprocess import DEVNULL
+except ImportError:  # Python 2
+    DEVNULL = open(os.devnull, 'wb')
 from sys import exit, stderr, stdout
 from threading import Event, Lock, Thread
 from time import sleep
@@ -21,9 +31,10 @@ from dateutil.parser import parse
 from pyfiglet import CharNotPrinted, Figlet
 
 
+click.disable_unicode_literals_warning = True
+
 DEFAULT_FONT = "univers"
 DEFAULT_TIME_FORMAT = "%H:%M:%S"  # --no-seconds expects this to end with :%S
-DEFAULT_DATE_FORMAT = "%Y-%m-%d"
 TIMEDELTA_REGEX = re.compile(r'((?P<years>\d+)y ?)?'
                              r'((?P<days>\d+)d ?)?'
                              r'((?P<hours>\d+)h ?)?'
@@ -33,9 +44,6 @@ INPUT_PAUSE = 1
 INPUT_RESET = 2
 INPUT_EXIT = 3
 INPUT_LAP = 4
-INPUT_PLUS = 5
-INPUT_MINUS = 6
-INPUT_END = 7
 
 
 def setup(stdscr):
@@ -43,7 +51,7 @@ def setup(stdscr):
     curses.use_default_colors()
     curses.init_pair(1, curses.COLOR_RED, -1)
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_RED)
-    curses.init_pair(3, curses.COLOR_BLUE, -1)
+    curses.init_pair(3, curses.COLOR_GREEN, -1)
     curses.init_pair(4, -1, curses.COLOR_RED)
     try:
         curses.curs_set(False)
@@ -59,34 +67,29 @@ def setup(stdscr):
     return (curses_lock, input_queue, quit_event)
 
 
-def draw_text(stdscr, text, color=0, fallback=None, title=None, no_figlet_y_offset=-1, end=None):
+def draw_text(stdscr, text, color=0, fallback=None, title=None):
     """
     Draws text in the given color. Duh.
     """
     if fallback is None:
         fallback = text
     y, x = stdscr.getmaxyx()
-    effective_y = (y if no_figlet_y_offset < 0 else 1)
-    y_delta = (0 if no_figlet_y_offset < 0 else no_figlet_y_offset)
     if title:
         title = pad_to_size(title, x, 1)
         if "\n" in title.rstrip("\n"):
             # hack to get more spacing between title and body for figlet
             title += "\n" * 5
         text = title + "\n" + pad_to_size(text, x, len(text.split("\n")))
-    if end:
-        end = pad_to_size(end, x, 1)
-        text = pad_to_size(text, x, len(text.split("\n"))) + "\n" + end
-    lines = pad_to_size(text, x, effective_y).rstrip("\n").split("\n")
+    lines = pad_to_size(text, x, y).rstrip("\n").split("\n")
 
     try:
         for i, line in enumerate(lines):
-            stdscr.insstr(i + y_delta, 0, line, curses.color_pair(color))
+            stdscr.insstr(i, 0, line, curses.color_pair(color))
     except:
-        lines = pad_to_size(fallback, x, effective_y).rstrip("\n").split("\n")
+        lines = pad_to_size(fallback, x, y).rstrip("\n").split("\n")
         try:
             for i, line in enumerate(lines[:]):
-                stdscr.insstr(i + y_delta, 0, line, curses.color_pair(color))
+                stdscr.insstr(i, 0, line, curses.color_pair(color))
         except:
             pass
     stdscr.refresh()
@@ -136,18 +139,6 @@ def format_seconds_alt(seconds, start, hide_seconds=False):
             output += "00:"
         seconds = seconds % period_seconds
     return output.rstrip(":")
-
-
-def format_target(target, time_format, date_format):
-    """
-    Returns a human-readable string representation of the countdown's target
-    datetime
-    """
-    if datetime.now().date() != target.date():
-        fmt = "{} {}".format(date_format, time_format)
-    else:
-        fmt = time_format
-    return target.strftime(fmt)
 
 
 def graceful_ctrlc(func):
@@ -269,8 +260,8 @@ def print_version(ctx, param, value):
 
 def verify_outfile(ctx, param, value):
     if value:
-        if os.path.exists(value):
-            raise click.BadParameter("File already exists: {}".format(value))
+        # if os.path.exists(value):
+            #raise click.BadParameter("File already exists: {}".format(value))
         if not os.access(dirname(abspath(value)), os.W_OK):
             raise click.BadParameter("Unable to write file: {}".format(value))
     return value
@@ -287,40 +278,38 @@ def countdown(
     text=None,
     timespec=None,
     title=None,
-    end=None,
     voice=None,
     voice_prefix=None,
-    exec_cmd=None,
     outfile=None,
+    persistent=False,
     no_bell=False,
     no_seconds=False,
     no_text_magic=True,
     no_figlet=False,
-    no_figlet_y_offset=-1,
     no_window_title=False,
     time=False,
     time_format=None,
-    date_format=None,
     **kwargs
 ):
     try:
         sync_start, target = parse_timestr(timespec)
     except ValueError:
         raise click.BadParameter("Unable to parse TIME value '{}'".format(timespec))
-    if exec_cmd and voice:  # prevent passing both --exec-cmd and --voice
-        raise click.BadParameter("--exec-cmd and --voice are mutually exclusive")
     curses_lock, input_queue, quit_event = setup(stdscr)
     figlet = Figlet(font=font)
-    if not no_figlet:
-        no_figlet_y_offset = -1
+
+    if title and not no_figlet:
+        try:
+            title = figlet.renderText(title)
+        except CharNotPrinted:
+            title = ""
 
     voice_cmd = None
     if voice:
-        for cmd in ("/usr/bin/say", "/usr/bin/espeak", "/usr/bin/espeak-ng"):
+        for cmd in ("/usr/bin/say", "/usr/bin/espeak"):
             if os.path.exists(cmd):
                 voice_cmd = cmd
                 break
-    if voice or exec_cmd:
         voice_prefix = voice_prefix or ""
 
     input_thread = Thread(
@@ -349,49 +338,29 @@ def countdown(
                         with open(outfile, 'w') as f:
                             f.write("{}\n{}\n".format(countdown_text, seconds_left))
                     stdscr.erase()
-                    end_text = format_target(
-                        target,
-                        time_format=time_format,
-                        date_format=date_format,
-                    ) if end else None
-                    fallback = countdown_text
-                    if title:
-                        fallback = title + "\n" + fallback
-                    if end:
-                        fallback = fallback + "\n" + end_text
                     try:
                         draw_text(
                             stdscr,
                             countdown_text if no_figlet else figlet.renderText(countdown_text),
                             color=1 if seconds_left <= critical else 0,
-                            fallback=fallback,
-                            title=title if no_figlet or not title else figlet.renderText(title),
-                            end=end_text,
-                            no_figlet_y_offset=no_figlet_y_offset,
+                            fallback=title + "\n" + countdown_text if title else countdown_text,
+                            title=title,
                         )
                     except CharNotPrinted:
                         draw_text(stdscr, "E")
-            annunciation = None
-            if seconds_left <= critical:
-                annunciation = str(seconds_left)
-            elif seconds_left in (5, 10, 20, 30, 60):
-                annunciation = "{} {} seconds".format(voice_prefix, seconds_left)
-            elif seconds_left in (300, 600, 1800):
-                annunciation = "{} {} minutes".format(voice_prefix, int(seconds_left / 60))
-            elif seconds_left == 3600:
-                annunciation = "{} one hour".format(voice_prefix)
-            if annunciation or exec_cmd:
-                if exec_cmd:
+            if voice_cmd:
+                announciation = None
+                if seconds_left <= critical:
+                    announciation = str(seconds_left)
+                elif seconds_left in (5, 10, 20, 30, 60):
+                    announciation = "{} {} seconds".format(voice_prefix, seconds_left)
+                elif seconds_left in (300, 600, 1800):
+                    announciation = "{} {} minutes".format(voice_prefix, int(seconds_left / 60))
+                elif seconds_left == 3600:
+                    announciation = "{} one hour".format(voice_prefix)
+                if announciation:
                     Popen(
-                        exec_cmd.format(seconds_left, annunciation or ""),
-                        stdout=DEVNULL,
-                        stderr=STDOUT,
-                        shell=True,
-                    )
-
-                if voice_cmd:
-                    Popen(
-                        [voice_cmd, "-v", voice, annunciation.strip()],
+                        [voice_cmd, "-v", voice, announciation.strip()],
                         stdout=DEVNULL,
                         stderr=STDOUT,
                     )
@@ -428,32 +397,23 @@ def countdown(
                                 countdown_text if no_figlet else figlet.renderText(countdown_text),
                                 color=3,
                                 fallback=countdown_text,
-                                title=title if no_figlet or not title else figlet.renderText(title),
-                                no_figlet_y_offset=no_figlet_y_offset,
                             )
                         except CharNotPrinted:
                             draw_text(stdscr, "E")
                     input_action = input_queue.get()
-                    time_paused = datetime.now() - pause_start
-                    sync_start += time_paused
-                    target += time_paused
+                    if input_action == INPUT_PAUSE:
+                        time_paused = datetime.now() - pause_start
+                        sync_start += time_paused
+                        target += time_paused
                 if input_action == INPUT_EXIT:  # no elif here! input_action may have changed
                     break
-                elif input_action == INPUT_PAUSE:
-                    continue
                 elif input_action == INPUT_RESET:
                     sync_start, target = parse_timestr(timespec)
                     seconds_left = int(ceil((target - datetime.now()).total_seconds()))
                     continue
-                elif input_action == INPUT_PLUS:
-                    target += timedelta(seconds=10)
-                elif input_action == INPUT_MINUS:
-                    target -= timedelta(seconds=10)
                 elif input_action == INPUT_LAP:
                     continue
-                elif input_action == INPUT_END:
-                    end = not end
-                    continue
+
             sync_start = sleep_target
 
             seconds_left = int(ceil((target - datetime.now()).total_seconds()))
@@ -496,7 +456,6 @@ def countdown(
                                     rendered_text,
                                     color=base_color if flip else 4,
                                     fallback=text,
-                                    no_figlet_y_offset=no_figlet_y_offset,
                                 )
                             else:
                                 draw_text(stdscr, "", color=base_color if flip else 4)
@@ -531,7 +490,7 @@ def countdown(
         with curses_lock:
             if not no_window_title:
                 os.write(stdout.fileno(), "\033]2;\007".encode())
-            if outfile:
+            if outfile and not persistent:
                 os.remove(outfile)
         quit_event.set()
         input_thread.join()
@@ -541,26 +500,21 @@ def countdown(
 def stopwatch(
     stdscr,
     alt_format=False,
-    critical=3,
-    exec_cmd=None,
     font=DEFAULT_FONT,
     no_figlet=False,
-    no_figlet_y_offset=-1,
     no_seconds=False,
     quit_after=None,
     title=None,
     outfile=None,
+    persistent=False,
     no_window_title=False,
     time=False,
     time_format=None,
-    voice_prefix=None,
     **kwargs
 ):
     curses_lock, input_queue, quit_event = setup(stdscr)
     figlet = Figlet(font=font)
 
-    if not no_figlet:
-        no_figlet_y_offset = -1
     if title and not no_figlet:
         try:
             title = figlet.renderText(title)
@@ -581,47 +535,27 @@ def stopwatch(
         while quit_after is None or seconds_elapsed < int(quit_after):
             figlet.width = stdscr.getmaxyx()[1]
             if time:
-                stopwatch_text = datetime.now().strftime(time_format)
+                countdown_text = datetime.now().strftime(time_format)
             elif alt_format:
-                stopwatch_text = format_seconds_alt(seconds_elapsed, 0, hide_seconds=no_seconds)
+                countdown_text = format_seconds_alt(seconds_elapsed, 0, hide_seconds=no_seconds)
             else:
-                stopwatch_text = format_seconds(seconds_elapsed, hide_seconds=no_seconds)
+                countdown_text = format_seconds(seconds_elapsed, hide_seconds=no_seconds)
             with curses_lock:
                 if not no_window_title:
-                    os.write(stdout.fileno(), "\033]2;{0}\007".format(stopwatch_text).encode())
+                    os.write(stdout.fileno(), "\033]2;{0}\007".format(countdown_text).encode())
                 if outfile:
                     with open(outfile, 'w') as f:
-                        f.write("{}\n{}\n".format(stopwatch_text, seconds_elapsed))
+                        f.write("{}\n{}\n".format(countdown_text, seconds_elapsed))
                 stdscr.erase()
                 try:
                     draw_text(
                         stdscr,
-                        stopwatch_text if no_figlet else figlet.renderText(stopwatch_text),
-                        fallback=stopwatch_text,
+                        countdown_text if no_figlet else figlet.renderText(countdown_text),
+                        fallback=countdown_text,
                         title=title,
-                        no_figlet_y_offset=no_figlet_y_offset,
                     )
                 except CharNotPrinted:
                     draw_text(stdscr, "E")
-            if exec_cmd:
-                voice_prefix = voice_prefix or ""
-                annunciation = ""
-                if seconds_elapsed <= critical and seconds_elapsed > 0:
-                    annunciation = str(seconds_elapsed)
-                elif seconds_elapsed in (5, 10, 20, 30, 40, 50, 60):
-                    annunciation = "{} {} seconds".format(voice_prefix, seconds_elapsed)
-                elif seconds_elapsed in (120, 180, 300, 600, 1800):
-                    annunciation = "{} {} minutes".format(voice_prefix, int(seconds_elapsed / 60))
-                elif seconds_elapsed == 3600:
-                    annunciation = "{} one hour".format(voice_prefix)
-                elif seconds_elapsed % 3600 == 0 and seconds_elapsed > 0:
-                    annunciation = "{} {} hours".format(voice_prefix, int(seconds_elapsed / 3600))
-                Popen(
-                    exec_cmd.format(seconds_elapsed, annunciation),
-                    stdout=DEVNULL,
-                    stderr=STDOUT,
-                    shell=True,
-                )
             sleep_target = sync_start + timedelta(seconds=seconds_elapsed + 1)
             if time:
                 sleep_target = sleep_target.replace(microsecond=0)
@@ -635,19 +569,18 @@ def stopwatch(
                     pause_start = datetime.now()
                     with curses_lock:
                         if not no_window_title:
-                            os.write(stdout.fileno(), "\033]2;{0}\007".format(stopwatch_text).encode())
+                            os.write(stdout.fileno(), "\033]2;{0}\007".format(countdown_text).encode())
                         if outfile:
                             with open(outfile, 'w') as f:
-                                f.write("{}\n{}\n".format(stopwatch_text, seconds_elapsed))
+                                f.write("{}\n{}\n".format(countdown_text, seconds_elapsed))
                         stdscr.erase()
                         try:
                             draw_text(
                                 stdscr,
-                                stopwatch_text if no_figlet else figlet.renderText(stopwatch_text),
+                                countdown_text if no_figlet else figlet.renderText(countdown_text),
                                 color=3,
-                                fallback=stopwatch_text,
+                                fallback=countdown_text,
                                 title=title,
-                                no_figlet_y_offset=no_figlet_y_offset,
                             )
                         except CharNotPrinted:
                             draw_text(stdscr, "E")
@@ -664,10 +597,6 @@ def stopwatch(
                     sync_start = datetime.now()
                     laps = []
                     seconds_elapsed = 0
-                elif input_action == INPUT_PLUS:
-                    sync_start -= timedelta(seconds=10)
-                elif input_action == INPUT_MINUS:
-                    sync_start += timedelta(seconds=10)
                 elif input_action == INPUT_LAP:
                     if pause_start:
                         sync_start += (datetime.now() - pause_start)
@@ -675,15 +604,12 @@ def stopwatch(
                     laps.append((datetime.now() - sync_start).total_seconds())
                     sync_start = datetime.now()
                     seconds_elapsed = 0
-            if time:
-                seconds_elapsed = ceil((datetime.now() - sync_start).total_seconds())
-            else:
-                seconds_elapsed = int((datetime.now() - sync_start).total_seconds())
+            seconds_elapsed = int((datetime.now() - sync_start).total_seconds())
     finally:
         with curses_lock:
             if not no_window_title:
                 os.write(stdout.fileno(), "\033]2;\007".encode())
-            if outfile:
+            if outfile and not persistent:
                 os.remove(outfile)
         quit_event.set()
         input_thread.join()
@@ -701,16 +627,10 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
             input_queue.put(INPUT_EXIT)
         elif key == " ":
             input_queue.put(INPUT_PAUSE)
-        elif key in ("e", "E"):
-            input_queue.put(INPUT_END)
         elif key in ("r", "R"):
             input_queue.put(INPUT_RESET)
         elif key in ("l", "L"):
             input_queue.put(INPUT_LAP)
-        elif key == "+":
-            input_queue.put(INPUT_PLUS)
-        elif key == "-":
-            input_queue.put(INPUT_MINUS)
         sleep(0.01)
 
 
@@ -722,14 +642,11 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 @click.option("-B", "--no-bell", default=False, is_flag=True,
               help="Don't ring terminal bell at end of countdown")
 @click.option("-c", "--critical", default=3, metavar="N",
-              help="Draw final N seconds in red and announce them individually with --voice "
-                   "or --exec-cmd (defaults to 3)")
-@click.option("-e", "--end", default=False, is_flag=True,
-              help="Display target datetime of unpaused countdown")
+              help="Draw final N seconds in red (defaults to 3)")
 @click.option("-f", "--font", default=DEFAULT_FONT, metavar="FONT",
               help="Choose from http://www.figlet.org/examples.html")
 @click.option("-p", "--voice-prefix", metavar="TEXT",
-              help="Add TEXT to the beginning of --voice and --exec annunciations "
+              help="Add TEXT to the beginning of --voice announciations "
                    "(except per-second ones)")
 @click.option("-q", "--quit-after", metavar="N",
               help="Quit N seconds after countdown (use with -b or -t) "
@@ -745,20 +662,15 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
               help="Don't update terminal title with remaining/elapsed time")
 @click.option("-v", "--voice", metavar="VOICE",
               help="Spoken countdown "
-                   "(at fixed intervals with per-second annunciations starting at --critical; "
+                   "(at fixed intervals with per-second announciations starting at --critical; "
                    "requires `espeak` on Linux or `say` on macOS; "
                    "choose VOICE from `say -v '?'` or `espeak --voices`)")
 @click.option("-o", "--outfile", metavar="PATH", callback=verify_outfile,
               help="File to write current remaining/elapsed time to")
-@click.option("--exec-cmd", metavar="CMD",
-              help="Runs CMD every second. '{0}' and '{1}' in CMD will be replaced with the "
-                   "remaining/elapsed number of seconds and a more sparse annunciation as in "
-                   "--voice, respectively. For example, to get a callout at five seconds only, "
-                   "use: --exec-cmd \"if [ '{0}' == '5' ]; then say -v Alex {1}; fi\"")
+@click.option("-pf", "--persistent", default=False, is_flag=True,
+              help="Keep the output file after the countdown/stopwatch ends")
 @click.option("--no-figlet", default=False, is_flag=True,
               help="Don't use ASCII art for display")
-@click.option("--no-figlet-y-offset", default=-1,
-              help="Vertical offset within the terminal (only for --no-figlet)")
 @click.option("--no-text-magic", default=False, is_flag=True,
               help="Don't try to replace non-ASCII characters (use with -t)")
 @click.option("--version", is_flag=True, callback=print_version,
@@ -767,34 +679,27 @@ def input_thread_body(stdscr, input_queue, quit_event, curses_lock):
 @click.option("-z", "--time", default=False, is_flag=True,
               help="Show current time instead of countdown/stopwatch")
 @click.option("-Z", "--time-format", default=None,
-              help="Format for --time/--end (defaults to \"{}\", "
+              help="Format for --time (defaults to \"{}\", "
                    "ignores --no-seconds)".format(DEFAULT_TIME_FORMAT))
-@click.option("-D", "--date-format", default=None,
-              help="Format for --end (defaults to \"{}\")".format(DEFAULT_DATE_FORMAT))
 @click.argument('timespec', metavar="[TIME]", required=False)
 def main(**kwargs):
     """
     \b
-    Starts a countdown to TIME. Example values for TIME:
+    Starts a countdown to or from TIME. Example values for TIME:
     10, '1h 5m 30s', '12:00', '2020-01-01', '2020-01-01 14:00 UTC'.
     \b
     If TIME is not given, termdown will operate in stopwatch mode
     and count forward.
     \b
     Hotkeys:
-    \tE\tShow end time (countdown mode only)
     \tL\tLap (stopwatch mode only)
     \tR\tReset
     \tSPACE\tPause (will delay absolute TIME)
-    \t+\tPlus (will add 10 seconds)
-    \t-\tMinus (will subtract 10 seconds)
     \tQ\tQuit
     """
     if kwargs['time_format'] is None:
         kwargs['time_format'] = \
                 DEFAULT_TIME_FORMAT[:-3] if kwargs['no_seconds'] else DEFAULT_TIME_FORMAT
-    if kwargs['date_format'] is None:
-        kwargs['date_format'] = DEFAULT_DATE_FORMAT
 
     if kwargs['timespec']:
         curses.wrapper(countdown, **kwargs)
