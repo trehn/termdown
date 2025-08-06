@@ -79,8 +79,14 @@ Options:
   --help                        Show this message and exit.
 ```
 
+# Installation via pip
 ```
 pip install termdown
+```
+# Installation using included 'setup.py' script
+```
+git clone https://github.com/trehn/termdown.git && cd termdown && \
+sudo python3 setup.py install
 ```
 
 ------------------------------------------------------------------------
