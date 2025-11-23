@@ -1,0 +1,167 @@
+import re
+import unicodedata
+from datetime import datetime, timedelta
+from math import ceil
+
+from dateutil import tz
+from dateutil.parser import parse
+
+NORMALIZE_TEXT_MAP = {
+    "ä": "ae",
+    "Ä": "Ae",
+    "ö": "oe",
+    "Ö": "Oe",
+    "ü": "ue",
+    "Ü": "Ue",
+    "ß": "ss",
+}
+TIMEDELTA_REGEX = re.compile(
+    r"((?P<years>\d+)y ?)?"
+    r"((?P<days>\d+)d ?)?"
+    r"((?P<hours>\d+)h ?)?"
+    r"((?P<minutes>\d+)m ?)?"
+    r"((?P<seconds>\d+)s ?)?"
+)
+
+
+def format_seconds(seconds, hide_seconds=False):
+    """
+    Returns a human-readable string representation of the given amount
+    of seconds.
+    """
+    seconds = int(ceil(seconds))
+    if seconds <= 60:
+        return str(seconds)
+    output = ""
+    for period, period_seconds in (
+        ("y", 31557600),
+        ("d", 86400),
+        ("h", 3600),
+        ("m", 60),
+        ("s", 1),
+    ):
+        if seconds >= period_seconds and not (hide_seconds and period == "s"):
+            output += str(int(seconds / period_seconds))
+            output += period
+            output += " "
+            seconds = seconds % period_seconds
+    return output.strip()
+
+
+def format_seconds_alt(seconds, start, hide_seconds=False):
+    # make sure we always show at least 00:00:00
+    start = max(start, 86400)
+    output = ""
+    total_seconds = seconds
+    for period_seconds in (
+        31557600,
+        86400,
+        3600,
+        60,
+        1,
+    ):
+        if hide_seconds and period_seconds == 1 and total_seconds > 60:
+            break
+        actual_period_value = int(seconds / period_seconds)
+        if actual_period_value > 0:
+            output += str(actual_period_value).zfill(2) + ":"
+        elif start > period_seconds or total_seconds > period_seconds:
+            output += "00:"
+        seconds = seconds % period_seconds
+    return output.rstrip(":")
+
+
+def format_target(target, time_format, date_format):
+    """
+    Returns a human-readable string representation of the countdown's target
+    datetime
+    """
+    if datetime.now().date() != target.date():
+        fmt = "{} {}".format(date_format, time_format)
+    else:
+        fmt = time_format
+    return target.strftime(fmt)
+
+
+def normalize_text(input_str):
+    for char, replacement in NORMALIZE_TEXT_MAP.items():
+        input_str = input_str.replace(char, replacement)
+    return "".join(
+        [
+            c
+            for c in unicodedata.normalize("NFD", input_str)
+            if unicodedata.category(c) != "Mn"
+        ]
+    )
+
+
+def pad_to_size(text, x, y):
+    """
+    Adds whitespace to text to center it within a frame of the given
+    dimensions.
+    """
+    input_lines = text.rstrip().split("\n")
+    longest_input_line = max(map(len, input_lines))
+    number_of_input_lines = len(input_lines)
+    x = max(x, longest_input_line)
+    y = max(y, number_of_input_lines)
+    output = ""
+
+    padding_top = int((y - number_of_input_lines) / 2)
+    padding_bottom = y - number_of_input_lines - padding_top
+    padding_left = int((x - longest_input_line) / 2)
+
+    output += padding_top * (" " * x + "\n")
+    for line in input_lines:
+        output += (
+            padding_left * " " + line + " " * (x - padding_left - len(line)) + "\n"
+        )
+    output += padding_bottom * (" " * x + "\n")
+
+    return output
+
+
+def parse_timestr(timestr):
+    """
+    Parse a string describing a point in time.
+    """
+    timedelta_secs = parse_timedelta(timestr)
+
+    if timedelta_secs:
+        target = datetime.now() + timedelta(seconds=timedelta_secs)
+    elif timestr.isdigit():
+        target = datetime.now() + timedelta(seconds=int(timestr))
+    else:
+        try:
+            target = parse(timestr)
+        except Exception:
+            # unfortunately, dateutil doesn't raise the best exceptions
+            raise ValueError("Unable to parse '{}'".format(timestr))
+
+    try:
+        # try to convert target to naive local timezone
+        target = target.astimezone(tz=tz.tzlocal()).replace(tzinfo=None)
+    except ValueError:
+        # parse() already returned a naive datetime, all is well
+        pass
+    return target
+
+
+def parse_timedelta(deltastr):
+    """
+    Parse a string describing a period of time.
+    """
+    matches = TIMEDELTA_REGEX.match(deltastr)
+    if not matches:
+        return None
+    components = {}
+    for name, value in matches.groupdict().items():
+        if value:
+            components[name] = int(value)
+    for period, hours in (("days", 24), ("years", 8766)):
+        if period in components:
+            components["hours"] = (
+                components.get("hours", 0) + components[period] * hours
+            )
+            del components[period]
+    return int(timedelta(**components).total_seconds())

@@ -1,11 +1,8 @@
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import find_packages, setup
 
 setup(
     name="termdown",
-    version="1.18.0",
+    version="2.0.0",
     description="Countdown timer for your terminal",
     author="Torsten Rehn",
     author_email="torsten@rehn.email",
@@ -30,16 +27,15 @@ setup(
         "Programming Language :: Python :: 3",
         "Topic :: Utilities",
     ],
+    packages=find_packages(),
     install_requires=[
-        "click >= 2.0",
         "pyfiglet >= 0.7",
         "python-dateutil",
         "windows-curses ; platform_system=='Windows'",
     ],
-    py_modules=['termdown'],
     entry_points={
-        'console_scripts': [
-            "termdown=termdown:main",
+        "console_scripts": [
+            "termdown=termdown.cli:main",
         ],
     },
 )
