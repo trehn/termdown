@@ -40,7 +40,15 @@ def countdown(ui, args):
                 # while waiting for the next tick.
                 break
 
-            countdown_text = format_seconds(seconds_left, hide_seconds=args.no_seconds)
+            if args.alt_format:
+                countdown_text = format_seconds_alt(
+                    seconds_left, hide_seconds=args.no_seconds
+                )
+            else:
+                countdown_text = format_seconds(
+                    seconds_left, hide_seconds=args.no_seconds
+                )
+
             with ui.curses_lock:
                 ui.set_window_title(countdown_text)
                 if args.outfile:
@@ -204,7 +212,7 @@ def stopwatch(ui, args):
 
         if args.alt_format:
             stopwatch_text = format_seconds_alt(
-                int(seconds_elapsed), 0, hide_seconds=args.no_seconds
+                int(seconds_elapsed), hide_seconds=args.no_seconds
             )
         else:
             stopwatch_text = format_seconds(

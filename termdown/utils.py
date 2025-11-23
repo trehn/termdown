@@ -48,10 +48,9 @@ def format_seconds(seconds, hide_seconds=False):
     return output.strip()
 
 
-def format_seconds_alt(seconds, start, hide_seconds=False):
-    # make sure we always show at least 00:00:00
-    start = max(start, 86400)
+def format_seconds_alt(seconds, hide_seconds=False):
     output = ""
+    seconds = int(ceil(seconds))
     total_seconds = seconds
     for period_seconds in (
         31557600,
@@ -65,7 +64,7 @@ def format_seconds_alt(seconds, start, hide_seconds=False):
         actual_period_value = int(seconds / period_seconds)
         if actual_period_value > 0:
             output += str(actual_period_value).zfill(2) + ":"
-        elif start > period_seconds or total_seconds > period_seconds:
+        elif 86400 > period_seconds or total_seconds > period_seconds:
             output += "00:"
         seconds = seconds % period_seconds
     return output.rstrip(":")
