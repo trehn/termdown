@@ -1,6 +1,7 @@
 import os
 from curses import beep
 from datetime import datetime, timedelta
+from math import ceil
 from queue import Empty
 from subprocess import DEVNULL, STDOUT, Popen
 from sys import stdout
@@ -60,18 +61,19 @@ def countdown(ui, args):
                 elif seconds_left <= args.critical:
                     color = 1
                 ui.draw_text(countdown_text, color=color, end=end_text)
+
             annunciation = None
             if seconds_left <= args.critical:
-                annunciation = str(int(seconds_left))  # Announce whole seconds
-            elif int(seconds_left) in (5, 10, 20, 30, 60):
+                annunciation = str(int(ceil(seconds_left)))  # Announce whole seconds
+            elif int(ceil(seconds_left)) in (5, 10, 20, 30, 60):
                 annunciation = "{} {} seconds".format(
-                    args.voice_prefix, int(seconds_left)
+                    args.voice_prefix, int(ceil(seconds_left))
                 )
-            elif int(seconds_left) in (300, 600, 1800):
+            elif int(ceil(seconds_left)) in (300, 600, 1800):
                 annunciation = "{} {} minutes".format(
                     args.voice_prefix, int(seconds_left / 60)
                 )
-            elif int(seconds_left) == 3600:
+            elif int(ceil(seconds_left)) == 3600:
                 annunciation = "{} one hour".format(args.voice_prefix)
             if annunciation or args.exec_cmd:
                 if (
@@ -195,11 +197,11 @@ def stopwatch(ui, args):
 
         if args.alt_format:
             stopwatch_text = format_seconds_alt(
-                seconds_elapsed, 0, hide_seconds=args.no_seconds
+                int(seconds_elapsed), 0, hide_seconds=args.no_seconds
             )
         else:
             stopwatch_text = format_seconds(
-                seconds_elapsed, hide_seconds=args.no_seconds
+                int(seconds_elapsed), hide_seconds=args.no_seconds
             )
         with ui.curses_lock:
             if not args.no_window_title:
@@ -213,27 +215,33 @@ def stopwatch(ui, args):
 
             ui.draw_text(stopwatch_text, color=3 if ticker.is_paused else 0)
 
-        if args.exec_cmd:
-            voice_prefix = args.voice_prefix or ""
-            annunciation = ""
-            if seconds_elapsed <= args.critical and seconds_elapsed > 0:
-                annunciation = str(int(seconds_elapsed))
-            elif int(seconds_elapsed) in (5, 10, 20, 30, 40, 50, 60):
-                annunciation = "{} {} seconds".format(
-                    voice_prefix, int(seconds_elapsed)
-                )
-            elif int(seconds_elapsed) in (120, 180, 300, 600, 1800):
-                annunciation = "{} {} minutes".format(
-                    voice_prefix, int(seconds_elapsed / 60)
-                )
-            elif int(seconds_elapsed) == 3600:
-                annunciation = "{} one hour".format(voice_prefix)
-            elif int(seconds_elapsed) % 3600 == 0 and seconds_elapsed > 0:
-                annunciation = "{} {} hours".format(
-                    voice_prefix, int(seconds_elapsed / 3600)
-                )
+        annunciation = None
+        if int(seconds_elapsed) <= args.critical and seconds_elapsed >= 1:
+            annunciation = str(int(seconds_elapsed))
+        elif int(seconds_elapsed) in (5, 10, 20, 30, 40, 50, 60):
+            annunciation = "{} {} seconds".format(
+                args.voice_prefix, int(seconds_elapsed)
+            )
+        elif int(seconds_elapsed) in (120, 180, 300, 600, 1800):
+            annunciation = "{} {} minutes".format(
+                args.voice_prefix, int(seconds_elapsed / 60)
+            )
+        elif int(seconds_elapsed) == 3600:
+            annunciation = "{} one hour".format(args.voice_prefix)
+        elif int(seconds_elapsed) % 3600 == 0 and seconds_elapsed > 1:
+            annunciation = "{} {} hours".format(
+                args.voice_prefix, int(seconds_elapsed / 3600)
+            )
+
+        if annunciation and args.voice_cmd:
             Popen(
-                args.exec_cmd.format(seconds_elapsed, annunciation),
+                [args.voice_cmd, "-v", args.voice, annunciation.strip()],
+                stdout=DEVNULL,
+                stderr=STDOUT,
+            )
+        if args.exec_cmd:
+            Popen(
+                args.exec_cmd.format(seconds_elapsed, annunciation or ""),
                 stdout=DEVNULL,
                 stderr=STDOUT,
                 shell=True,
