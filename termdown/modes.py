@@ -126,9 +126,11 @@ def countdown(ui, args):
             base_color = 1 if args.blink else 0
             flip = True
             ticker.pause()  # Pause ticker during blinking phase
-            while args.quit_after is None or (
-                datetime.now() - target_time
-            ).total_seconds() < float(args.quit_after):
+            while True:
+                if args.quit_after and (
+                    datetime.now() - target_time
+                ).total_seconds() > float(args.quit_after):
+                    return
                 with ui.curses_lock:
                     ui.set_window_title("/" if flip else "\\")
                     if args.text:
@@ -157,8 +159,10 @@ def clock(ui, args):
     offset = timedelta(0)
     ticker = Metronome(ui.input_queue, None)
     ticker.start()
-    while args.quit_after is None or seconds_elapsed < float(args.quit_after):
+    while True:
         seconds_elapsed = time() - time_started
+        if args.quit_after and seconds_elapsed >= float(args.quit_after):
+            return
         clock_text = (datetime.now() + offset).strftime(args.time_format)
         with ui.curses_lock:
             ui.set_window_title(clock_text)
@@ -189,11 +193,14 @@ def stopwatch(ui, args):
     time_paused = None
     seconds_elapsed = 0
     laps = []
-    while args.quit_after is None or seconds_elapsed < int(args.quit_after):
+    while True:
         if not time_paused:
             seconds_elapsed = time() - time_started
         else:
             seconds_elapsed = time_paused - time_started
+
+        if args.quit_after and seconds_elapsed >= int(args.quit_after):
+            return seconds_elapsed, laps
 
         if args.alt_format:
             stopwatch_text = format_seconds_alt(
