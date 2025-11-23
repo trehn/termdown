@@ -100,24 +100,20 @@ def pad_to_size(text, x, y):
     Adds whitespace to text to center it within a frame of the given
     dimensions.
     """
-    input_lines = text.rstrip().split("\n")
-    longest_input_line = max(map(len, input_lines))
+    input_lines = text.rstrip("\n").split("\n")
     number_of_input_lines = len(input_lines)
-    x = max(x, longest_input_line)
-    y = max(y, number_of_input_lines)
     output = ""
 
     padding_top = int((y - number_of_input_lines) / 2)
     padding_bottom = y - number_of_input_lines - padding_top
-    padding_left = int((x - longest_input_line) / 2)
 
     output += padding_top * (" " * x + "\n")
     for line in input_lines:
+        padding_left = int((x - len(line)) / 2)
         output += (
             padding_left * " " + line + " " * (x - padding_left - len(line)) + "\n"
         )
     output += padding_bottom * (" " * x + "\n")
-
     return output
 
 

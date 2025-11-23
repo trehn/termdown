@@ -29,7 +29,7 @@ setup(
     ],
     packages=find_packages(),
     install_requires=[
-        "pyfiglet >= 0.7",
+        "art",
         "python-dateutil",
         "windows-curses ; platform_system=='Windows'",
     ],

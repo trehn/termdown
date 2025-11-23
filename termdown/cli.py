@@ -90,7 +90,7 @@ parser.add_argument(
     "--font",
     default=DEFAULT_FONT,
     metavar="FONT",
-    help="Choose from http://www.figlet.org/examples.html",
+    help="Choose from https://www.ascii-art.site/FontList.html",
 )
 parser.add_argument(
     "-p",
@@ -148,13 +148,7 @@ parser.add_argument(
     "use: --exec-cmd \"if [ '{0}' == '5' ]; then say -v Alex {1}; fi\"",
 )
 parser.add_argument(
-    "--no-figlet", action="store_true", help="Don't use ASCII art for display"
-)
-parser.add_argument(
-    "--no-figlet-y-offset",
-    type=int,
-    default=-1,
-    help="Vertical offset within the terminal (only for --no-figlet)",
+    "--no-art", action="store_true", help="Don't use ASCII art for display"
 )
 parser.add_argument(
     "--no-text-magic",
@@ -219,8 +213,6 @@ def main():
         )
     if args.date_format is None:
         args.date_format = DEFAULT_DATE_FORMAT
-    if not args.no_figlet:
-        args.no_figlet_y_offset = -1
 
     if args.outfile:
         if os.path.exists(args.outfile):

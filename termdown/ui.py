@@ -5,7 +5,7 @@ from sys import stdout
 from threading import Lock, Thread
 from time import sleep
 
-from pyfiglet import CharNotPrinted, Figlet
+from art import text2art
 
 from .events import (
     INPUT_END,
@@ -24,7 +24,6 @@ class Ui:
         self.curses_lock = Lock()
         self.input_queue = Queue()
         self.stdscr = stdscr
-        self.figlet = Figlet(font=args.font)
         self._args = args
 
         curses.use_default_colors()
@@ -40,53 +39,44 @@ class Ui:
         stdscr.timeout(0)  # Set timeout for getch/getkey to 0 (non-blocking)
         stdscr.nodelay(True)  # Set nodelay mode (also non-blocking)
 
-        if args.title and not args.no_figlet:
-            try:
-                args.title = self.figlet.renderText(args.title)
-            except CharNotPrinted:
-                args.title = ""
-
-    def draw_text(self, text, color=0, fallback=None, end=None):
+    def draw_text(self, text, color=0, end=None):
         """
         Draws text in the given color. Duh.
         """
-        if fallback is None:
-            fallback = text
-        if not self._args.no_figlet:
-            self.figlet.width = self.stdscr.getmaxyx()[1]
-            try:
-                text = self.figlet.renderText(text)
-            except CharNotPrinted:
-                pass
+
+        title = self._args.title or ""
+        end = end or ""
+
+        # build a list of possible fallbacks in descending order of preference
+        variants = [
+            (title + "\n\n" + text + "\n\n" + end).strip("\n"),
+            (title + "\n\n" + text).strip("\n"),
+            text,
+            "E",
+        ]
+
+        if not self._args.no_art:
+            art_title = text2art(title, font=self._args.font)
+            art_text = text2art(text, font=self._args.font)
+            art_end = text2art(end, font=self._args.font)
+            variants = [
+                (art_title + "\n\n\n\n" + art_text + "\n\n\n\n" + art_end).strip("\n"),
+                (art_title + "\n\n" + art_text + "\n\n" + art_end).strip("\n"),
+                (art_title + "\n\n" + art_text + "\n\n" + end).strip("\n"),
+                (title + "\n\n" + art_text + "\n\n" + end).strip("\n"),
+            ] + variants
 
         y, x = self.stdscr.getmaxyx()
-        effective_y = y if self._args.no_figlet_y_offset < 0 else 1
-        y_delta = (
-            0 if self._args.no_figlet_y_offset < 0 else self._args.no_figlet_y_offset
-        )
-        if self._args.title:
-            self._args.title = pad_to_size(self._args.title, x, 1)
-            if "\n" in self._args.title.rstrip("\n"):
-                # hack to get more spacing between title and body for figlet
-                self._args.title += "\n" * 5
-            text = self._args.title + "\n" + pad_to_size(text, x, len(text.split("\n")))
-        if end:
-            end = pad_to_size(end, x, 1)
-            text = pad_to_size(text, x, len(text.split("\n"))) + "\n" + end
-        lines = pad_to_size(text, x, effective_y).rstrip("\n").split("\n")
-
-        self.stdscr.erase()
-
-        try:
-            for i, line in enumerate(lines):
-                self.stdscr.insstr(i + y_delta, 0, line, curses.color_pair(color))
-        except Exception:
-            lines = pad_to_size(fallback, x, effective_y).rstrip("\n").split("\n")
+        for variant in variants:
+            lines = pad_to_size(variant, x, y).rstrip("\n").split("\n")
+            self.stdscr.erase()
             try:
-                for i, line in enumerate(lines[:]):
-                    self.stdscr.insstr(i + y_delta, 0, line, curses.color_pair(color))
+                for i, line in enumerate(lines):
+                    self.stdscr.insstr(i, 0, line, curses.color_pair(color))
             except Exception:
-                pass
+                continue
+            else:
+                break
 
         self.stdscr.refresh()
 

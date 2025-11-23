@@ -54,22 +54,12 @@ def countdown(ui, args):
                     if args.end
                     else None
                 )
-                fallback = countdown_text
-                if args.title:
-                    fallback = args.title + "\n" + fallback
-                if args.end:
-                    fallback = fallback + "\n" + end_text
                 color = 0
                 if ticker.is_paused:
                     color = 3
                 elif seconds_left <= args.critical:
                     color = 1
-                ui.draw_text(
-                    countdown_text,
-                    color=color,
-                    fallback=fallback,
-                    end=end_text,
-                )
+                ui.draw_text(countdown_text, color=color, end=end_text)
             annunciation = None
             if seconds_left <= args.critical:
                 annunciation = str(int(seconds_left))  # Announce whole seconds
@@ -140,11 +130,7 @@ def countdown(ui, args):
                 with ui.curses_lock:
                     ui.set_window_title("/" if flip else "\\")
                     if args.text:
-                        ui.draw_text(
-                            args.text,
-                            color=base_color if flip else 4,
-                            fallback=args.text,
-                        )
+                        ui.draw_text(args.text, color=base_color if flip else 4)
                     else:
                         ui.draw_text("", color=base_color if flip else 4)
                 if args.blink:
