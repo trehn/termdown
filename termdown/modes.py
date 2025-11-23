@@ -29,13 +29,17 @@ def countdown(ui, args):
     offset = (target_time.microsecond / 1_000_000) or None
     ticker = Metronome(ui.input_queue, offset)
     ticker.start()
-    start_time = datetime.now()
-    seconds_left = (target_time - start_time).total_seconds()
 
-    while seconds_left > 0 or args.blink or args.text:
-        seconds_left = (target_time - datetime.now()).total_seconds()
-        countdown_text = format_seconds(seconds_left, hide_seconds=args.no_seconds)
-        if seconds_left > 0:
+    while True:  # Outer loop to allow restarting countdown from scratch
+        while True:  # Active countdown loop
+            seconds_left = (target_time - datetime.now()).total_seconds()
+            if seconds_left <= 0:
+                # If seconds_left is zero or negative, immediately break to handle the
+                # "finished" state. This prevents displaying "0" for an entire second
+                # while waiting for the next tick.
+                break
+
+            countdown_text = format_seconds(seconds_left, hide_seconds=args.no_seconds)
             with ui.curses_lock:
                 ui.set_window_title(countdown_text)
                 if args.outfile:
@@ -54,7 +58,7 @@ def countdown(ui, args):
                 if args.title:
                     fallback = args.title + "\n" + fallback
                 if args.end:
-                    fallback = args.fallback + "\n" + end_text
+                    fallback = fallback + "\n" + end_text
                 color = 0
                 if ticker.is_paused:
                     color = 3
@@ -66,32 +70,36 @@ def countdown(ui, args):
                     fallback=fallback,
                     end=end_text,
                 )
-        annunciation = None
-        if seconds_left <= args.critical:
-            annunciation = str(seconds_left)
-        elif int(seconds_left) in (5, 10, 20, 30, 60):
-            annunciation = "{} {} seconds".format(args.voice_prefix, seconds_left)
-        elif int(seconds_left) in (300, 600, 1800):
-            annunciation = "{} {} minutes".format(
-                args.voice_prefix, int(seconds_left / 60)
-            )
-        elif int(seconds_left) == 3600:
-            annunciation = "{} one hour".format(args.voice_prefix)
-        if annunciation or args.exec_cmd:
-            if args.exec_cmd:
-                Popen(
-                    args.exec_cmd.format(seconds_left, annunciation or ""),
-                    stdout=DEVNULL,
-                    stderr=STDOUT,
-                    shell=True,
+            annunciation = None
+            if seconds_left <= args.critical:
+                annunciation = str(int(seconds_left))  # Announce whole seconds
+            elif int(seconds_left) in (5, 10, 20, 30, 60):
+                annunciation = "{} {} seconds".format(
+                    args.voice_prefix, int(seconds_left)
                 )
-
-            if args.voice_cmd:
-                Popen(
-                    [args.voice_cmd, "-v", args.voice, annunciation.strip()],
-                    stdout=DEVNULL,
-                    stderr=STDOUT,
+            elif int(seconds_left) in (300, 600, 1800):
+                annunciation = "{} {} minutes".format(
+                    args.voice_prefix, int(seconds_left / 60)
                 )
+            elif int(seconds_left) == 3600:
+                annunciation = "{} one hour".format(args.voice_prefix)
+            if annunciation or args.exec_cmd:
+                if (
+                    annunciation and args.voice_cmd
+                ):  # Only announce if there is something to say
+                    Popen(
+                        [args.voice_cmd, "-v", args.voice, annunciation.strip()],
+                        stdout=DEVNULL,
+                        stderr=STDOUT,
+                    )
+                if args.exec_cmd:
+                    # Pass annunciation even if it's empty, format() handles it.
+                    Popen(
+                        args.exec_cmd.format(seconds_left, annunciation or ""),
+                        stdout=DEVNULL,
+                        stderr=STDOUT,
+                        shell=True,
+                    )
 
             input_action = ui.input_queue.get()
             if input_action == INPUT_PAUSE:
@@ -99,9 +107,11 @@ def countdown(ui, args):
                 if duration:
                     target_time += timedelta(seconds=duration)
             elif input_action == INPUT_EXIT:
-                break
+                return
             elif input_action == INPUT_RESET:
                 target_time = parse_timestr(args.timespec)
+                # Continue the inner loop, seconds_left will be re-evaluated
+                continue
             elif input_action == INPUT_PLUS:
                 target_time += timedelta(seconds=10)
             elif input_action == INPUT_MINUS:
@@ -110,47 +120,47 @@ def countdown(ui, args):
                 args.end = not args.end
                 continue
 
-        if seconds_left <= 0:
-            # we could write this entire block outside the parent while
-            # but that would leave us unable to reset everything
+        # After the active countdown loop, handle the "time is up" state.
 
-            if not args.no_bell:
+        if not args.no_bell:
+            with ui.curses_lock:
+                beep()
+
+        if args.outfile:
+            with open(args.outfile, "w") as f:
+                f.write("{}\n{}\n".format(args.text if args.text else "DONE", 0))
+
+        if args.blink or args.text:
+            base_color = 1 if args.blink else 0
+            flip = True
+            ticker.pause()  # Pause ticker during blinking phase
+            while args.quit_after is None or (
+                datetime.now() - target_time
+            ).total_seconds() < float(args.quit_after):
                 with ui.curses_lock:
-                    beep()
-
-            if args.outfile:
-                with open(args.outfile, "w") as f:
-                    f.write("{}\n{}\n".format(args.text if args.text else "DONE", 0))
-
-            if args.blink or args.text:
-                base_color = 1 if args.blink else 0
-                flip = True
-                ticker.pause()  # don't flood queue while we're blinking
-                while args.quit_after is None or (
-                    datetime.now() - target_time
-                ).total_seconds() < float(args.quit_after):
-                    with ui.curses_lock:
-                        ui.set_window_title("/" if flip else "\\")
-                        if args.text:
-                            ui.draw_text(
-                                args.text,
-                                color=base_color if flip else 4,
-                                fallback=args.text,
-                            )
-                        else:
-                            ui.draw_text("", color=base_color if flip else 4)
-                    if args.blink:
-                        flip = not flip
-                    try:
-                        input_action = ui.input_queue.get(True, 0.5)
-                    except Empty:
-                        input_action = None
-                    if input_action == INPUT_EXIT:
-                        return
-                    elif input_action == INPUT_RESET:
-                        target_time = parse_timestr(args.timespec)
-                        ticker.pause()  # resume ticking
-                        break
+                    ui.set_window_title("/" if flip else "\\")
+                    if args.text:
+                        ui.draw_text(
+                            args.text,
+                            color=base_color if flip else 4,
+                            fallback=args.text,
+                        )
+                    else:
+                        ui.draw_text("", color=base_color if flip else 4)
+                if args.blink:
+                    flip = not flip
+                try:
+                    input_action = ui.input_queue.get(True, 0.5)
+                except Empty:
+                    input_action = None
+                if input_action == INPUT_EXIT:
+                    return
+                elif input_action == INPUT_RESET:
+                    target_time = parse_timestr(args.timespec)
+                    ticker.pause()  # resume
+                    break  # Break out of the blinking loop to restart the main countdown
+        else:
+            break
 
 
 def clock(ui, args):
@@ -223,7 +233,9 @@ def stopwatch(ui, args):
             if seconds_elapsed <= args.critical and seconds_elapsed > 0:
                 annunciation = str(int(seconds_elapsed))
             elif int(seconds_elapsed) in (5, 10, 20, 30, 40, 50, 60):
-                annunciation = "{} {} seconds".format(voice_prefix, seconds_elapsed)
+                annunciation = "{} {} seconds".format(
+                    voice_prefix, int(seconds_elapsed)
+                )
             elif int(seconds_elapsed) in (120, 180, 300, 600, 1800):
                 annunciation = "{} {} minutes".format(
                     voice_prefix, int(seconds_elapsed / 60)
