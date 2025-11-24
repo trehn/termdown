@@ -1,8 +1,9 @@
 ![termdown demo](/termdown.gif?raw=true)
 
 ```
-usage: termdown [-h] [-a] [-b] [-B] [-c N] [-e] [-f FONT] [-p TEXT] [-q N] [-s] [-t TEXT] [-T TITLE] [-W] [-v VOICE] [-o PATH] [--exec-cmd CMD] [--no-art] [--no-text-magic] [-z]
-                [-Z TIME_FORMAT] [-D DATE_FORMAT] [--version]
+usage: termdown [-h] [-a] [-b] [-B] [-c N] [-e] [-f FONT] [--font-charset CHARSET] [--font-size N] [-p TEXT]
+                [-q N] [-s] [-t TEXT] [-T TITLE] [-W] [-v VOICE] [-o PATH] [--exec-cmd CMD] [--no-art]
+                [--no-text-magic] [-z] [-Z TIME_FORMAT] [-D DATE_FORMAT] [--version]
                 [timespec]
 
     Starts a countdown to TIME. Example values for TIME:
@@ -30,7 +31,10 @@ options:
   -B, --no-bell         Don't ring terminal bell at end of countdown
   -c, --critical N      Draw final N seconds in red and announce them individually with --voice or --exec-cmd (defaults to 3)
   -e, --end             Display target datetime of unpaused countdown
-  -f, --font FONT       Choose from https://www.ascii-art.site/FontList.html
+  -f, --font FONT       Choose from https://www.ascii-art.site/FontList.html or provide a full path to an OTF/TTF file
+  --font-charset CHARSET
+                        Provide a string of characters of increasing visual density (e.g. " .oO#@") to render OTF/TTF pixels
+  --font-size N         Set font size when using OTF/TTF
   -p, --voice-prefix TEXT
                         Add TEXT to the beginning of --voice and --exec annunciations (except per-second ones)
   -q, --quit-after N    Quit N seconds after countdown (use with -b or -t) or terminate stopwatch after N seconds

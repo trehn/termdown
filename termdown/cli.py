@@ -90,7 +90,20 @@ parser.add_argument(
     "--font",
     default=DEFAULT_FONT,
     metavar="FONT",
-    help="Choose from https://www.ascii-art.site/FontList.html",
+    help="Choose from https://www.ascii-art.site/FontList.html or provide a full path to an OTF/TTF file",
+)
+parser.add_argument(
+    "--font-charset",
+    default=" ░▒▓█",
+    metavar="CHARSET",
+    help='Provide a string of characters of increasing visual density (e.g. " .oO#@") to render OTF/TTF pixels',
+)
+parser.add_argument(
+    "--font-size",
+    type=int,
+    default=24,
+    metavar="N",
+    help="Set font size when using OTF/TTF",
 )
 parser.add_argument(
     "-p",

@@ -16,6 +16,7 @@ from .events import (
     INPUT_PLUS,
     INPUT_RESET,
 )
+from .ttf import ttf_to_ascii
 from .utils import pad_to_size
 
 
@@ -56,9 +57,19 @@ class Ui:
         ]
 
         if not self._args.no_art:
-            art_title = text2art(title, font=self._args.font)
-            art_text = text2art(text, font=self._args.font)
-            art_end = text2art(end, font=self._args.font)
+            if os.path.exists(self._args.font):
+                ttf_args = (
+                    self._args.font,
+                    self._args.font_size,
+                    self._args.font_charset,
+                )
+                art_title = ttf_to_ascii(title, *ttf_args)
+                art_text = ttf_to_ascii(text, *ttf_args)
+                art_end = ttf_to_ascii(end, *ttf_args)
+            else:
+                art_title = text2art(title, font=self._args.font)
+                art_text = text2art(text, font=self._args.font)
+                art_end = text2art(end, font=self._args.font)
             variants = [
                 (art_title + "\n\n\n\n" + art_text + "\n\n\n\n" + art_end).strip("\n"),
                 (art_title + "\n\n" + art_text + "\n\n" + art_end).strip("\n"),

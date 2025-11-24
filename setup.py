@@ -30,6 +30,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         "art",
+        "Pillow",
         "python-dateutil",
         "windows-curses ; platform_system=='Windows'",
     ],
