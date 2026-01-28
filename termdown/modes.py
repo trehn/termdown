@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from math import ceil
 from queue import Empty
 from subprocess import DEVNULL, STDOUT, Popen
-from sys import stdout
+from sys import exit, stdout
 from time import time
 
 from .events import (
@@ -107,7 +107,7 @@ def countdown(ui, args):
                 if duration:
                     target_time += timedelta(seconds=duration)
             elif input_action == INPUT_EXIT:
-                return
+                exit(1)
             elif input_action == INPUT_RESET:
                 target_time = parse_timestr(args.timespec)
                 # Continue the inner loop, seconds_left will be re-evaluated
