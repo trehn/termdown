@@ -211,8 +211,6 @@ def curses_ui(stdscr, mode, args):
         with ui.curses_lock:
             if not args.no_window_title:
                 ui.set_window_title("")
-        if args.outfile:
-            os.remove(args.outfile)
 
 
 def main():
