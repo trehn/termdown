@@ -1,6 +1,6 @@
 import re
 import unicodedata
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from math import ceil
 
 from dateutil import tz
@@ -73,8 +73,9 @@ def format_seconds_alt(seconds, hide_seconds=False):
 def format_target(target, time_format, date_format):
     """
     Returns a human-readable string representation of the countdown's target
-    datetime
+    datetime. Converts UTC target to local time for display.
     """
+    target = target.astimezone(tz.tzlocal())
     if datetime.now().date() != target.date():
         fmt = "{} {}".format(date_format, time_format)
     else:
@@ -119,26 +120,24 @@ def pad_to_size(text, x, y):
 def parse_timestr(timestr):
     """
     Parse a string describing a point in time.
+    Returns a timezone-aware datetime in UTC to avoid issues with DST changes.
     """
     timedelta_secs = parse_timedelta(timestr)
 
     if timedelta_secs:
-        target = datetime.now() + timedelta(seconds=timedelta_secs)
+        target = datetime.now(timezone.utc) + timedelta(seconds=timedelta_secs)
     elif timestr.isdigit():
-        target = datetime.now() + timedelta(seconds=int(timestr))
+        target = datetime.now(timezone.utc) + timedelta(seconds=int(timestr))
     else:
         try:
             target = parse(timestr)
         except Exception:
             # unfortunately, dateutil doesn't raise the best exceptions
             raise ValueError("Unable to parse '{}'".format(timestr))
+        if target.tzinfo is None:
+            target = target.replace(tzinfo=tz.tzlocal())
+        target = target.astimezone(timezone.utc)
 
-    try:
-        # try to convert target to naive local timezone
-        target = target.astimezone(tz=tz.tzlocal()).replace(tzinfo=None)
-    except ValueError:
-        # parse() already returned a naive datetime, all is well
-        pass
     return target
 
 

@@ -1,6 +1,6 @@
 import os
 from curses import beep
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from math import ceil
 from queue import Empty
 from subprocess import DEVNULL, STDOUT, Popen
@@ -33,7 +33,7 @@ def countdown(ui, args):
 
     while True:  # Outer loop to allow restarting countdown from scratch
         while True:  # Active countdown loop
-            seconds_left = (target_time - datetime.now()).total_seconds()
+            seconds_left = (target_time - datetime.now(timezone.utc)).total_seconds()
             if seconds_left <= 0:
                 # If seconds_left is zero or negative, immediately break to handle the
                 # "finished" state. This prevents displaying "0" for an entire second
@@ -136,7 +136,7 @@ def countdown(ui, args):
             ticker.pause()  # Pause ticker during blinking phase
             while True:
                 if args.quit_after and (
-                    datetime.now() - target_time
+                    datetime.now(timezone.utc) - target_time
                 ).total_seconds() > float(args.quit_after):
                     return
                 with ui.curses_lock:
