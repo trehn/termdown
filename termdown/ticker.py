@@ -1,6 +1,6 @@
 from math import ceil
 from threading import Thread
-from time import sleep, time
+from time import monotonic, sleep, time
 
 from .events import TIME_TICK
 
@@ -40,7 +40,7 @@ class Metronome:
 
     def pause(self):
         if self.is_paused:  # unpause
-            duration = time() - self._pause_time
+            duration = monotonic() - self._pause_time
             self._pause_time = None
             if self._offset is not None:
                 # If we're not running in clock mode, change the offset so the
@@ -48,7 +48,7 @@ class Metronome:
                 self._offset = time() % 1.0
             return duration
         else:  # pause
-            self._pause_time = time()
+            self._pause_time = monotonic()
 
     @property
     def is_paused(self):

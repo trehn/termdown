@@ -5,7 +5,7 @@ from math import ceil
 from queue import Empty
 from subprocess import DEVNULL, STDOUT, Popen
 from sys import exit, stdout
-from time import time
+from time import monotonic, time
 
 from .events import (
     INPUT_END,
@@ -162,13 +162,13 @@ def countdown(ui, args):
 
 
 def clock(ui, args):
-    time_started = time()
+    time_started = monotonic()
     seconds_elapsed = 0
     offset = timedelta(0)
     ticker = Metronome(ui.input_queue, None)
     ticker.start()
     while True:
-        seconds_elapsed = time() - time_started
+        seconds_elapsed = monotonic() - time_started
         if args.quit_after and seconds_elapsed >= float(args.quit_after):
             return
         clock_text = (datetime.now() + offset).strftime(args.time_format)
@@ -203,7 +203,7 @@ def stopwatch(ui, args):
     laps = []
     while True:
         if not time_paused:
-            seconds_elapsed = time() - time_started
+            seconds_elapsed = monotonic() - time_started
         else:
             seconds_elapsed = time_paused - time_started
 
@@ -273,15 +273,15 @@ def stopwatch(ui, args):
                 time_started += duration
                 time_paused = None
             else:
-                time_paused = time()
+                time_paused = monotonic()
         elif input_action == INPUT_EXIT:
             break
         elif input_action == INPUT_RESET:
             laps = []
-            time_started = time()
+            time_started = monotonic()
         elif input_action == INPUT_LAP:
-            lap_time = time()
+            lap_time = monotonic()
             laps.append(lap_time - time_started)
             time_started = lap_time
 
-    return (time() - time_started, laps)
+    return (monotonic() - time_started, laps)
