@@ -10,7 +10,7 @@ class Metronome:
     Will put a TIME_TICK event into the given queue every full second, delayed by offset.
     """
 
-    def __init__(self, queue, offset):
+    def __init__(self, queue, offset=0):
         self._offset = offset
         self._queue = queue
         self._thread = Thread(target=self._run, daemon=True)
@@ -20,10 +20,7 @@ class Metronome:
         while True:
             # Calculate the time to sleep until the next full second
             current_time = time()
-            if self._offset is not None:
-                target_time = ceil(current_time) + self._offset
-            else:
-                target_time = ceil(current_time)
+            target_time = ceil(current_time) + self._offset
             sleep_time = target_time - current_time
 
             # If sleep_time is very small (e.g., we're just before the second),

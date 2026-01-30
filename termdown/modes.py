@@ -27,8 +27,8 @@ from .utils import (
 
 def countdown(ui, args):
     target_time = parse_timestr(args.timespec)
-    offset = (target_time.microsecond / 1_000_000) or None
-    ticker = Metronome(ui.input_queue, offset)
+    offset = (target_time.microsecond / 1_000_000)
+    ticker = Metronome(ui.input_queue, offset=offset)
     ticker.start()
 
     while True:  # Outer loop to allow restarting countdown from scratch
@@ -165,7 +165,7 @@ def clock(ui, args):
     time_started = monotonic()
     seconds_elapsed = 0
     offset = timedelta(0)
-    ticker = Metronome(ui.input_queue, None)
+    ticker = Metronome(ui.input_queue)
     ticker.start()
     while True:
         seconds_elapsed = monotonic() - time_started
@@ -195,8 +195,8 @@ def clock(ui, args):
 
 
 def stopwatch(ui, args):
-    time_started = time()
-    ticker = Metronome(ui.input_queue, time_started % 1.0)
+    time_started = monotonic()
+    ticker = Metronome(ui.input_queue, offset=time() % 1.0)
     ticker.start()
     time_paused = None
     seconds_elapsed = 0
