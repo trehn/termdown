@@ -271,6 +271,18 @@ def main():
             total_seconds = sum(laps)
             average_seconds = total_seconds / len(laps)
             stderr.write(
+                "{:.3f}\t{}\tlap min\n".format(
+                    min(laps),
+                    format_seconds(int(min(laps))),
+                )
+            )
+            stderr.write(
+                "{:.3f}\t{}\tlap max\n".format(
+                    max(laps),
+                    format_seconds(int(max(laps))),
+                )
+            )
+            stderr.write(
                 "{:.3f}\t{}\tlap avg\n".format(
                     average_seconds,
                     format_seconds(int(average_seconds)),
