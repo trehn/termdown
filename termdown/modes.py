@@ -207,7 +207,7 @@ def stopwatch(ui, args):
         else:
             seconds_elapsed = time_paused - time_started
 
-        if args.quit_after and seconds_elapsed >= int(args.quit_after):
+        if args.quit_after and seconds_elapsed >= float(args.quit_after):
             return seconds_elapsed, laps
 
         if args.alt_format:
