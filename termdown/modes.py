@@ -212,11 +212,11 @@ def stopwatch(ui, args):
 
         if args.alt_format:
             stopwatch_text = format_seconds_alt(
-                int(seconds_elapsed), hide_seconds=args.no_seconds
+                round(seconds_elapsed), hide_seconds=args.no_seconds
             )
         else:
             stopwatch_text = format_seconds(
-                int(seconds_elapsed), hide_seconds=args.no_seconds
+                round(seconds_elapsed), hide_seconds=args.no_seconds
             )
         with ui.curses_lock:
             if not args.no_window_title:
