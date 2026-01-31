@@ -1,5 +1,4 @@
-1.18.0
-======
+# 1.18.0
 
 2021-11-10
 
@@ -11,8 +10,7 @@
 * fixed delayed countdown after repeatedly pausing and unpausing
 
 
-1.17.0
-======
+# 1.17.0
 
 2020-04-10
 
@@ -20,8 +18,7 @@
 * added - hotkey
 
 
-1.16.0
-======
+# 1.16.0
 
 2019-07-25
 
@@ -29,24 +26,21 @@
 * now works on Windows
 
 
-1.15.0
-======
+# 1.15.0
 
 2019-06-17
 
 * added `--exec-cmd`
 
 
-1.14.1
-======
+# 1.14.1
 
 2018-07-20
 
 * fixed `--no-seconds` not playing nice with `--time` and `--alt-format`
 
 
-1.14.0
-======
+# 1.14.0
 
 2018-07-15
 
@@ -54,8 +48,7 @@
 * added `--no-bell`
 
 
-1.13.0
-======
+# 1.13.0
 
 2018-03-18
 
@@ -64,16 +57,14 @@
 * per-second voice announciations now start at `--critical`
 
 
-1.12.2
-======
+# 1.12.2
 
 2018-02-26
 
 * fixed lap times being recorded incorrectly while paused
 
 
-1.12.1
-======
+# 1.12.1
 
 2017-09-21
 
@@ -81,8 +72,7 @@
 * fixed title not being included in non-figlet fallback text
 
 
-1.12.0
-======
+# 1.12.0
 
 2016-09-30
 
@@ -91,8 +81,7 @@
 * fixed cursor-related exception in some terminals
 
 
-1.11.0
-======
+# 1.11.0
 
 2016-06-26
 
@@ -101,8 +90,7 @@
 * fixed window title not updating in some terminals
 
 
-1.10.0
-======
+# 1.10.0
 
 2016-03-29
 
@@ -111,8 +99,7 @@
 * fixed Figlet rendering not being adjusted to terminal size
 
 
-1.9.0
-=====
+# 1.9.0
 
 2015-10-24
 
@@ -120,8 +107,7 @@
 * fixed drawing area being smaller than it could be
 
 
-1.8.0
-=====
+# 1.8.0
 
 2015-02-15
 
@@ -130,8 +116,7 @@
 * fixed using dates in other timezones
 
 
-1.7.2
-=====
+# 1.7.2
 
 2015-01-15
 
@@ -139,16 +124,14 @@
 * ``termdown --blink 0`` will now blink instead of exiting
 
 
-1.7.1
-=====
+# 1.7.1
 
 2014-11-08
 
 * stopwatch mode now prints elapsed time to stderr instead of stdout
 
 
-1.7.0
-=====
+# 1.7.0
 
 2014-11-03
 
@@ -158,8 +141,7 @@
 * draw counter in green while paused
 
 
-1.6.0
-=====
+# 1.6.0
 
 2014-10-21
 
@@ -167,8 +149,7 @@
 * added --no-figlet
 
 
-1.5.0
-=====
+# 1.5.0
 
 2014-08-05
 
@@ -176,16 +157,14 @@
 * fixed import error in setup.py
 
 
-1.4.0
-=====
+# 1.4.0
 
 2014-07-24
 
 * deal with non-ASCII characters
 
 
-1.3.0
-=====
+# 1.3.0
 
 2014-06-09
 
@@ -193,8 +172,7 @@
 * fixed formatting of 61 second display
 
 
-1.2.0
-=====
+# 1.2.0
 
 2014-06-08
 
@@ -202,8 +180,7 @@
 * --version
 
 
-1.1
-===
+# 1.1
 
 2014-06-06
 
@@ -212,8 +189,7 @@
 * packaging changes to better suit virtualenv
 
 
-1.0
-===
+# 1.0
 
 2014-06-02
 
