@@ -1,3 +1,16 @@
+# 2.0.0
+
+2026-01-31
+
+* added TTF/OTF support
+* added exit code 1 for premature countdown cancellation
+* added min/max for stopwatch lap times
+* changed outfile to being kept after exit
+* changed past times being interpreted as tomorrow if no date given
+* fixed incorrect countdown duration during DST changes
+* rewrite with lots of internal changes
+
+
 # 1.18.0
 
 2021-11-10
