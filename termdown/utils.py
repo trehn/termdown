@@ -22,6 +22,12 @@ TIMEDELTA_REGEX = re.compile(
     r"((?P<minutes>\d+)m ?)?"
     r"((?P<seconds>\d+)s ?)?"
 )
+DATE_COMPONENT_REGEX = re.compile(
+    r"\d{4}|"  # year
+    r"jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|"
+    r"\d{1,2}[/\-]\d{1,2}",  # day/month with separator
+    re.IGNORECASE,
+)
 
 
 def format_seconds(seconds, hide_seconds=False):
@@ -137,6 +143,14 @@ def parse_timestr(timestr):
         if target.tzinfo is None:
             target = target.replace(tzinfo=tz.tzlocal())
         target = target.astimezone(timezone.utc)
+
+        if (
+            target <= datetime.now(timezone.utc) and
+            not DATE_COMPONENT_REGEX.search(timestr)
+        ):
+            # User only gave us a time and it's in the past - probably
+            # means that time tomorrow.
+            target += timedelta(days=1)
 
     return target
 
