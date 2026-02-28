@@ -164,6 +164,12 @@ parser.add_argument(
     "--no-art", action="store_true", help="Don't use ASCII art for display"
 )
 parser.add_argument(
+    "-n",
+    "--notification",
+    metavar="NOTIFICATION_TEXT",
+    help="Sends notification when the countdown stops (Not avalible in TTY)",
+)
+parser.add_argument(
     "--no-text-magic",
     action="store_true",
     help="Don't try to replace non-ASCII characters (use with -t)",
