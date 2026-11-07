@@ -79,6 +79,14 @@ class Ui:
 
         y, x = self.stdscr.getmaxyx()
         for variant in variants:
+            variant_lines = variant.split("\n")
+            if (
+                len(variant_lines) > y
+                or max(len(line) for line in variant_lines) > x
+            ):
+                # insstr() silently truncates lines that are too wide,
+                # so we have to check ourselves whether this variant fits
+                continue
             lines = pad_to_size(variant, x, y).rstrip("\n").split("\n")
             self.stdscr.erase()
             try:
