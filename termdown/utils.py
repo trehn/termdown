@@ -16,17 +16,11 @@ NORMALIZE_TEXT_MAP = {
     "ß": "ss",
 }
 TIMEDELTA_REGEX = re.compile(
-    r"((?P<years>\d+)y ?)?"
-    r"((?P<days>\d+)d ?)?"
-    r"((?P<hours>\d+)h ?)?"
-    r"((?P<minutes>\d+)m ?)?"
-    r"((?P<seconds>\d+)s ?)?"
-)
-DATE_COMPONENT_REGEX = re.compile(
-    r"\d{4}|"  # year
-    r"jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|"
-    r"\d{1,2}[/\-]\d{1,2}",  # day/month with separator
-    re.IGNORECASE,
+    r"((?P<years>\d+)y\s*)?"
+    r"((?P<days>\d+)d\s*)?"
+    r"((?P<hours>\d+)h\s*)?"
+    r"((?P<minutes>\d+)m\s*)?"
+    r"((?P<seconds>\d+)s\s*)?"
 )
 
 
@@ -130,38 +124,68 @@ def parse_timestr(timestr):
     """
     timedelta_secs = parse_timedelta(timestr)
 
-    if timedelta_secs:
-        target = datetime.now(timezone.utc) + timedelta(seconds=timedelta_secs)
-    elif timestr.isdigit():
-        target = datetime.now(timezone.utc) + timedelta(seconds=int(timestr))
-    else:
-        try:
-            target = parse(timestr)
-        except Exception:
-            # unfortunately, dateutil doesn't raise the best exceptions
-            raise ValueError("Unable to parse '{}'".format(timestr))
-        if target.tzinfo is None:
-            target = target.replace(tzinfo=tz.tzlocal())
-        target = target.astimezone(timezone.utc)
+    if timedelta_secs is not None:
+        return datetime.now(timezone.utc) + timedelta(seconds=timedelta_secs)
+    if timestr.isdigit():
+        return datetime.now(timezone.utc) + timedelta(seconds=int(timestr))
 
-        if (
-            target <= datetime.now(timezone.utc) and
-            not DATE_COMPONENT_REGEX.search(timestr)
+    today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    try:
+        target = _parse_datetime(timestr, today)
+        if target <= datetime.now(timezone.utc) and not _contains_date(
+            timestr, today, target
         ):
             # User only gave us a time and it's in the past - probably
             # means that time tomorrow.
-            target += timedelta(days=1)
+            target = _parse_datetime(timestr, today + timedelta(days=1))
+    except Exception:
+        # unfortunately, dateutil doesn't raise the best exceptions
+        raise ValueError("Unable to parse '{}'".format(timestr))
+    return target.astimezone(timezone.utc)
 
+
+def _parse_datetime(timestr, default):
+    """
+    Parses timestr, filling in missing components from default. Returns a
+    timezone-aware datetime, assuming local time if no timezone is given.
+    """
+    target = parse(timestr, default=default)
+    if target.tzinfo is None:
+        target = target.replace(tzinfo=tz.tzlocal())
     return target
+
+
+def _contains_date(timestr, default, parsed):
+    """
+    Returns True if timestr specifies (part of) a date or a weekday, i.e.
+    if parsing it doesn't just use the date from the given default.
+    """
+    if parsed.date() != default.date():
+        return True
+    # Parse again with a default that differs in year, month, day and weekday.
+    for day in (1, 2, 3):
+        other = datetime(default.year - 1, default.month % 12 + 1, day)
+        if day != default.day and other.weekday() != default.weekday():
+            break
+    try:
+        return parse(timestr, default=other).date() != other.date()
+    except ValueError:
+        # e.g. Feb 29 in a non-leap year, so there definitely is a date
+        return True
 
 
 def parse_timedelta(deltastr):
     """
-    Parse a string describing a period of time.
+    Parse a string describing a period of time. Returns None if deltastr
+    doesn't look like one.
     """
+    deltastr = deltastr.strip()
     matches = TIMEDELTA_REGEX.match(deltastr)
-    if not matches:
+    if not matches.group(0):
         return None
+    if matches.end() != len(deltastr):
+        # e.g. "1h30", don't silently ignore the rest
+        raise ValueError("Unable to parse '{}'".format(deltastr))
     components = {}
     for name, value in matches.groupdict().items():
         if value:

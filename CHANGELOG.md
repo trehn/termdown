@@ -15,6 +15,9 @@
 * fixed announcements and `--exec-cmd` repeating on keypresses
 * fixed random fonts (e.g. `-f random`) being rejected, they're now picked once at startup
 * fixed non-ASCII characters in `--title` not being replaced
+* fixed durations like `1h30` silently ignoring everything after the first match
+* fixed past dates without a year (e.g. `5th 10:00`) being moved by one day
+* fixed past times being moved to tomorrow off by an hour across DST changes
 
 
 # 2.0.0
