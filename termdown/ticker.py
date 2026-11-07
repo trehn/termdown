@@ -1,50 +1,62 @@
-from math import ceil
-from threading import Thread
-from time import monotonic, sleep, time
+from threading import Event, Thread
+from time import monotonic, time
 
 from .events import TIME_TICK
 
 
 class Metronome:
     """
-    Will put a TIME_TICK event into the given queue every full second, delayed by offset.
+    Will put a TIME_TICK event into the given queue every second, at the
+    moments when the fractional part of time() equals offset.
     """
 
-    def __init__(self, queue, offset=0):
-        self._offset = offset
+    def __init__(self, queue, offset=0.0):
+        self._offset = offset % 1.0
         self._queue = queue
+        self._realigned = Event()
         self._thread = Thread(target=self._run, daemon=True)
         self._pause_time = None
 
     def _run(self):
         while True:
-            # Calculate the time to sleep until the next full second
-            current_time = time()
-            target_time = ceil(current_time) + self._offset
-            sleep_time = target_time - current_time
-
-            # If sleep_time is very small (e.g., we're just before the second),
-            # we should wait for the next second.
-            if sleep_time < 0.001:  # Small buffer to avoid missing the second
-                sleep_time += 1.0
-
-            sleep(sleep_time)
+            # Sleep until the next tick, plus a small margin so we never wake
+            # up just before it (which would e.g. make a countdown display the
+            # previous second for another full second).
+            sleep_time = (self._offset - time()) % 1.0 + 0.002
+            if self._realigned.wait(sleep_time):
+                # offset changed while we were sleeping, start over
+                self._realigned.clear()
+                continue
             if not self.is_paused:
                 self._queue.put(TIME_TICK)
 
     def start(self):
         self._thread.start()
 
+    def align(self, offset):
+        """
+        Make future ticks happen when the fractional part of time() equals
+        offset.
+        """
+        self._offset = offset % 1.0
+        self._realigned.set()
+
     def pause(self):
+        """
+        Toggles pause. Returns the duration of the pause when unpausing.
+        """
         if self.is_paused:  # unpause
             duration = monotonic() - self._pause_time
             self._pause_time = None
-            if self._offset is not None:
-                # If we're not running in clock mode, change the offset so the
-                # next tick will be 1s from now.
-                self._offset = time() % 1.0
             return duration
         else:  # pause
+            self._pause_time = monotonic()
+
+    def restart_pause(self):
+        """
+        If paused, forget about the time spent paused so far.
+        """
+        if self.is_paused:
             self._pause_time = monotonic()
 
     @property

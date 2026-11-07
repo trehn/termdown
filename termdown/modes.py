@@ -27,8 +27,8 @@ from .utils import (
 
 def countdown(ui, args):
     target_time = parse_timestr(args.timespec)
-    offset = (target_time.microsecond / 1_000_000)
-    ticker = Metronome(ui.input_queue, offset=offset)
+    # tick whenever the number of seconds left crosses a whole number
+    ticker = Metronome(ui.input_queue, offset=target_time.timestamp())
     ticker.start()
 
     while True:  # Outer loop to allow restarting countdown from scratch
@@ -106,10 +106,14 @@ def countdown(ui, args):
                     duration = ticker.pause()
                     if duration:
                         target_time += timedelta(seconds=duration)
+                        ticker.align(target_time.timestamp())
                 elif input_action == INPUT_EXIT:
                     exit(1)
                 elif input_action == INPUT_RESET:
                     target_time = parse_timestr(args.timespec)
+                    ticker.align(target_time.timestamp())
+                    # don't add time paused before the reset when unpausing
+                    ticker.restart_pause()
                 elif input_action == INPUT_PLUS:
                     target_time += timedelta(seconds=10)
                 elif input_action == INPUT_MINUS:
@@ -130,7 +134,8 @@ def countdown(ui, args):
         if args.blink or args.text:
             base_color = 1 if args.blink else 0
             flip = True
-            ticker.pause()  # Pause ticker during blinking phase
+            if not ticker.is_paused:  # we might have reached zero while paused
+                ticker.pause()  # Pause ticker during blinking phase
             while True:
                 if args.quit_after and (
                     datetime.now(timezone.utc) - target_time
@@ -152,6 +157,7 @@ def countdown(ui, args):
                     return
                 elif input_action == INPUT_RESET:
                     target_time = parse_timestr(args.timespec)
+                    ticker.align(target_time.timestamp())
                     ticker.pause()  # resume
                     break  # Break out of the blinking loop to restart the main countdown
         else:
@@ -202,6 +208,10 @@ def stopwatch(ui, args):
     def now():
         # while paused, time stands still at the moment we paused
         return monotonic() if time_paused is None else time_paused
+
+    def align_ticker():
+        # tick whenever the number of seconds elapsed crosses a whole number
+        ticker.align(time() - (now() - time_started))
 
     while True:
         seconds_elapsed = now() - time_started
@@ -271,6 +281,7 @@ def stopwatch(ui, args):
                 if duration:  # unpaused
                     time_started += duration
                     time_paused = None
+                    align_ticker()
                 else:
                     time_paused = monotonic()
             elif input_action == INPUT_EXIT:
@@ -281,7 +292,9 @@ def stopwatch(ui, args):
                 # display resets to 0 instead of going negative by the time spent
                 # paused before the reset.
                 time_started = now()
+                align_ticker()
             elif input_action == INPUT_LAP:
                 lap_time = now()
                 laps.append(lap_time - time_started)
                 time_started = lap_time
+                align_ticker()

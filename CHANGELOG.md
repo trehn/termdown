@@ -6,6 +6,10 @@
 * fixed stopwatch going negative when reset while paused (#109)
 * fixed stopwatch going negative when taking a lap while paused
 * fixed stopwatch total including paused time when quitting while paused
+* fixed countdown ending up to a second late after pausing or resetting
+* fixed clock updating late after pausing
+* fixed time paused before a reset being added to the countdown when unpausing
+* fixed countdown restarting paused when it reached zero while paused
 
 
 # 2.0.0
