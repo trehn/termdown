@@ -44,7 +44,7 @@ termdown = "termdown.cli:main"
 [project.urls]
 Homepage = "https://github.com/trehn/termdown"
 Repository = "https://github.com/trehn/termdown"
-Changelog = "https://github.com/trehn/termdown/blob/master/CHANGELOG.md"
+Changelog = "https://github.com/trehn/termdown/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.sdist]
 exclude = [
