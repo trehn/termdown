@@ -278,7 +278,13 @@ def stopwatch(ui, args):
             break
         elif input_action == INPUT_RESET:
             laps = []
-            time_started = monotonic()
+            if time_paused is not None:
+                # Stay paused, but rebase the start to the pause instant so the
+                # display resets to 0 instead of going negative by the time spent
+                # paused before the reset.
+                time_started = time_paused
+            else:
+                time_started = monotonic()
         elif input_action == INPUT_LAP:
             lap_time = monotonic()
             laps.append(lap_time - time_started)
