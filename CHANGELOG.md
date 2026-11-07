@@ -19,6 +19,8 @@
 * fixed past dates without a year (e.g. `5th 10:00`) being moved by one day
 * fixed past times being moved to tomorrow off by an hour across DST changes
 * fixed unparseable TIME crashing with a traceback instead of showing an error
+* fixed `--quit-after` in stopwatch mode restarting with every lap
+* fixed `--quit-after` quitting up to a second late in clock and stopwatch mode
 
 
 # 2.0.0

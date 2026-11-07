@@ -5,6 +5,7 @@ from math import ceil
 from queue import Empty
 from subprocess import DEVNULL, STDOUT, Popen
 from sys import exit, stdout
+from threading import Timer
 from time import monotonic, time
 
 from .events import (
@@ -15,6 +16,7 @@ from .events import (
     INPUT_PAUSE,
     INPUT_PLUS,
     INPUT_RESET,
+    TIME_TICK,
 )
 from .ticker import Metronome
 from .utils import (
@@ -23,6 +25,17 @@ from .utils import (
     format_target,
     parse_timestr,
 )
+
+
+def _wake_up_in(seconds, ui):
+    """
+    Makes sure the mode loop runs again after the given number of seconds,
+    if that is before the next regular tick.
+    """
+    if seconds < 1:
+        timer = Timer(seconds, ui.input_queue.put, (TIME_TICK,))
+        timer.daemon = True
+        timer.start()
 
 
 def countdown(ui, args):
@@ -179,8 +192,12 @@ def clock(ui, args):
     ticker.start()
     while True:
         seconds_elapsed = monotonic() - time_started
-        if args.quit_after and seconds_elapsed >= float(args.quit_after):
-            return
+        if args.quit_after:
+            seconds_until_quit = float(args.quit_after) - seconds_elapsed
+            if seconds_until_quit <= 0:
+                return
+            # ticks happen on full seconds of the clock, not since we started
+            _wake_up_in(seconds_until_quit, ui)
         clock_text = (datetime.now() + offset).strftime(args.time_format)
         with ui.curses_lock:
             ui.set_window_title(clock_text)
@@ -224,8 +241,14 @@ def stopwatch(ui, args):
     while True:
         seconds_elapsed = now() - time_started
 
-        if args.quit_after and seconds_elapsed >= float(args.quit_after):
-            return seconds_elapsed, laps
+        if args.quit_after:
+            # laps restart seconds_elapsed, but not the stopwatch as a whole
+            seconds_until_quit = float(args.quit_after) - sum(laps) - seconds_elapsed
+            if seconds_until_quit <= 0:
+                return seconds_elapsed, laps
+            if not ticker.is_paused:
+                # after laps, ticks no longer line up with the total time
+                _wake_up_in(seconds_until_quit, ui)
 
         if args.alt_format:
             stopwatch_text = format_seconds_alt(
