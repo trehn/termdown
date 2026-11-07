@@ -95,6 +95,23 @@ def normalize_text(input_str):
     )
 
 
+def trim_block(text):
+    """
+    Removes blank lines and columns around a block of text such as ASCII art.
+    All lines keep the same width so the block stays aligned when centered.
+    """
+    lines = [line.rstrip() for line in text.split("\n")]
+    while lines and not lines[0]:
+        lines.pop(0)
+    while lines and not lines[-1]:
+        lines.pop()
+    if not lines:
+        return ""
+    indent = min(len(line) - len(line.lstrip()) for line in lines if line)
+    width = max(len(line) for line in lines) - indent
+    return "\n".join(line[indent:].ljust(width) for line in lines)
+
+
 def pad_to_size(text, x, y):
     """
     Adds whitespace to text to center it within a frame of the given

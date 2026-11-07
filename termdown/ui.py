@@ -17,7 +17,7 @@ from .events import (
     INPUT_RESET,
 )
 from .ttf import ttf_to_ascii
-from .utils import pad_to_size
+from .utils import pad_to_size, trim_block
 
 
 class Ui:
@@ -70,6 +70,11 @@ class Ui:
                 art_title = text2art(title, font=self._args.font)
                 art_text = text2art(text, font=self._args.font)
                 art_end = text2art(end, font=self._args.font)
+            # fonts often add blank space around the text, which would make us
+            # fall back to smaller variants earlier than necessary
+            art_title = trim_block(art_title)
+            art_text = trim_block(art_text)
+            art_end = trim_block(art_end)
             variants = [
                 (art_title + "\n\n\n\n" + art_text + "\n\n\n\n" + art_end).strip("\n"),
                 (art_title + "\n\n" + art_text + "\n\n" + art_end).strip("\n"),

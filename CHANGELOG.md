@@ -21,6 +21,7 @@
 * fixed unparseable TIME crashing with a traceback instead of showing an error
 * fixed `--quit-after` in stopwatch mode restarting with every lap
 * fixed `--quit-after` quitting up to a second late in clock and stopwatch mode
+* fixed blank space around ASCII art requiring a larger terminal than necessary (#84)
 
 
 # 2.0.0
