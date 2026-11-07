@@ -18,6 +18,7 @@
 * fixed durations like `1h30` silently ignoring everything after the first match
 * fixed past dates without a year (e.g. `5th 10:00`) being moved by one day
 * fixed past times being moved to tomorrow off by an hour across DST changes
+* fixed unparseable TIME crashing with a traceback instead of showing an error
 
 
 # 2.0.0

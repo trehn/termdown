@@ -12,7 +12,7 @@ from art.utils import indirect_font
 from . import VERSION
 from .modes import clock, countdown, stopwatch
 from .ui import Ui
-from .utils import format_seconds, normalize_text
+from .utils import format_seconds, normalize_text, parse_timestr
 
 DEFAULT_FONT = "univers"
 DEFAULT_TIME_FORMAT = "%H:%M:%S"  # --no-seconds expects this to end with :%S
@@ -247,6 +247,14 @@ def main():
             if suggestions:
                 message += f" (did you mean: {', '.join(suggestions)}?)"
             parser.error(message)
+
+    if args.timespec and not args.time:
+        # Check TIME before starting curses so we can show a proper error.
+        # countdown() parses it again since durations are relative to now.
+        try:
+            parse_timestr(args.timespec)
+        except ValueError as exc:
+            parser.error(str(exc))
 
     if args.time_format is None:
         args.time_format = (
