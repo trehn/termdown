@@ -238,6 +238,20 @@ def stopwatch(ui, args):
         # tick whenever the number of seconds elapsed crosses a whole number
         ticker.align(time() - (now() - time_started))
 
+    def format_elapsed(seconds):
+        formatter = format_seconds_alt if args.alt_format else format_seconds
+        return formatter(round(seconds), hide_seconds=args.no_seconds)
+
+    def write_outfile(seconds):
+        if args.outfile:
+            with open(args.outfile, "w") as f:
+                f.write("{}\n{}\n".format(format_elapsed(seconds), seconds))
+
+    def finish(seconds):
+        # leave the final time in the outfile, not the one last displayed
+        write_outfile(seconds)
+        return seconds, laps
+
     while True:
         seconds_elapsed = now() - time_started
 
@@ -245,29 +259,19 @@ def stopwatch(ui, args):
             # laps restart seconds_elapsed, but not the stopwatch as a whole
             seconds_until_quit = float(args.quit_after) - sum(laps) - seconds_elapsed
             if seconds_until_quit <= 0:
-                return seconds_elapsed, laps
+                return finish(seconds_elapsed)
             if not ticker.is_paused:
                 # after laps, ticks no longer line up with the total time
                 _wake_up_in(seconds_until_quit, ui)
 
-        if args.alt_format:
-            stopwatch_text = format_seconds_alt(
-                round(seconds_elapsed), hide_seconds=args.no_seconds
-            )
-        else:
-            stopwatch_text = format_seconds(
-                round(seconds_elapsed), hide_seconds=args.no_seconds
-            )
+        stopwatch_text = format_elapsed(seconds_elapsed)
         with ui.curses_lock:
             if not args.no_window_title:
                 os.write(
                     stdout.fileno(),
                     "\033]2;{0}\007".format(stopwatch_text).encode(),
                 )
-            if args.outfile:
-                with open(args.outfile, "w") as f:
-                    f.write("{}\n{}\n".format(stopwatch_text, seconds_elapsed))
-
+            write_outfile(seconds_elapsed)
             ui.draw_text(stopwatch_text, color=3 if ticker.is_paused else 0)
 
         whole_seconds_elapsed = int(seconds_elapsed)
@@ -320,7 +324,7 @@ def stopwatch(ui, args):
                 else:
                     time_paused = monotonic()
             elif input_action == INPUT_EXIT:
-                return (now() - time_started, laps)
+                return finish(now() - time_started)
             elif input_action == INPUT_RESET:
                 laps = []
                 # If paused, this rebases the start to the pause instant so the

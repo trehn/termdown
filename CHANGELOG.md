@@ -22,6 +22,8 @@
 * fixed `--quit-after` in stopwatch mode restarting with every lap
 * fixed `--quit-after` quitting up to a second late in clock and stopwatch mode
 * fixed blank space around ASCII art requiring a larger terminal than necessary (#84)
+* fixed `--outfile` not containing the final time after quitting stopwatch mode (#60)
+* fixed invalid options (e.g. existing `--outfile` or broken font files) crashing with a traceback instead of showing an error
 
 
 # 2.0.0

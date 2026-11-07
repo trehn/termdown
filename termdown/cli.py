@@ -11,6 +11,7 @@ from art.utils import indirect_font
 
 from . import VERSION
 from .modes import clock, countdown, stopwatch
+from .ttf import ttf_to_ascii
 from .ui import Ui
 from .utils import format_seconds, normalize_text, parse_timestr
 
@@ -226,14 +227,19 @@ def curses_ui(stdscr, mode, args):
 def main():
     args = parser.parse_args()
     if args.exec_cmd and args.voice:  # prevent passing both --exec-cmd and --voice
-        raise RuntimeError("--exec-cmd and --voice are mutually exclusive")
+        parser.error("--exec-cmd and --voice are mutually exclusive")
 
     if args.text and not args.no_text_magic:
         args.text = normalize_text(args.text)
     if args.title and not args.no_text_magic:
         args.title = normalize_text(args.title)
 
-    if not args.no_art and not os.path.exists(args.font):
+    if not args.no_art and os.path.exists(args.font):
+        try:
+            ttf_to_ascii("", args.font, args.font_size, args.font_charset)
+        except RuntimeError as exc:
+            parser.error(str(exc))
+    elif not args.no_art:
         if args.font.lower() in RANDOM_FONTS:
             # pick a font once, otherwise art would pick a new one on every redraw
             args.font = indirect_font(
@@ -265,9 +271,9 @@ def main():
 
     if args.outfile:
         if os.path.exists(args.outfile):
-            raise RuntimeError("File already exists: {}".format(args.outfile))
+            parser.error("file already exists: {}".format(args.outfile))
         if not os.access(dirname(abspath(args.outfile)), os.W_OK):
-            raise RuntimeError("Unable to write file: {}".format(args.outfile))
+            parser.error("unable to write file: {}".format(args.outfile))
 
     args.voice_cmd = None
     if args.voice:
