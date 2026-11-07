@@ -198,11 +198,13 @@ def stopwatch(ui, args):
     time_paused = None
     seconds_elapsed = 0
     laps = []
+
+    def now():
+        # while paused, time stands still at the moment we paused
+        return monotonic() if time_paused is None else time_paused
+
     while True:
-        if not time_paused:
-            seconds_elapsed = monotonic() - time_started
-        else:
-            seconds_elapsed = time_paused - time_started
+        seconds_elapsed = now() - time_started
 
         if args.quit_after and seconds_elapsed >= float(args.quit_after):
             return seconds_elapsed, laps
@@ -272,17 +274,14 @@ def stopwatch(ui, args):
                 else:
                     time_paused = monotonic()
             elif input_action == INPUT_EXIT:
-                return (monotonic() - time_started, laps)
+                return (now() - time_started, laps)
             elif input_action == INPUT_RESET:
                 laps = []
-                if time_paused is not None:
-                    # Stay paused, but rebase the start to the pause instant so the
-                    # display resets to 0 instead of going negative by the time spent
-                    # paused before the reset.
-                    time_started = time_paused
-                else:
-                    time_started = monotonic()
+                # If paused, this rebases the start to the pause instant so the
+                # display resets to 0 instead of going negative by the time spent
+                # paused before the reset.
+                time_started = now()
             elif input_action == INPUT_LAP:
-                lap_time = monotonic()
+                lap_time = now()
                 laps.append(lap_time - time_started)
                 time_started = lap_time

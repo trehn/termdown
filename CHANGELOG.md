@@ -4,6 +4,8 @@
 * fixed font path missing from TTF/OTF loading error
 * fixed display lagging behind when holding down keys (#107)
 * fixed stopwatch going negative when reset while paused (#109)
+* fixed stopwatch going negative when taking a lap while paused
+* fixed stopwatch total including paused time when quitting while paused
 
 
 # 2.0.0
