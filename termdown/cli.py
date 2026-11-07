@@ -7,6 +7,7 @@ from os.path import abspath, dirname
 from sys import stderr
 
 from art import FONT_NAMES
+from art.utils import indirect_font
 
 from . import VERSION
 from .modes import clock, countdown, stopwatch
@@ -16,6 +17,12 @@ from .utils import format_seconds, normalize_text
 DEFAULT_FONT = "univers"
 DEFAULT_TIME_FORMAT = "%H:%M:%S"  # --no-seconds expects this to end with :%S
 DEFAULT_DATE_FORMAT = "%Y-%m-%d"
+# font names that make art pick a font at random
+RANDOM_FONTS = {
+    f"{prefix}{suffix}"
+    for prefix in ("random", "rand", "rnd")
+    for suffix in ("", "-small", "-medium", "-large", "-xlarge", "-na")
+} | {"wizard", "wiz", "magic"}
 
 
 def _escape_percent_for_argparse_help(text):
@@ -169,7 +176,7 @@ parser.add_argument(
 parser.add_argument(
     "--no-text-magic",
     action="store_true",
-    help="Don't try to replace non-ASCII characters (use with -t)",
+    help="Don't try to replace non-ASCII characters (use with -t/-T)",
 )
 parser.add_argument(
     "-z",
@@ -221,9 +228,20 @@ def main():
     if args.exec_cmd and args.voice:  # prevent passing both --exec-cmd and --voice
         raise RuntimeError("--exec-cmd and --voice are mutually exclusive")
 
+    if args.text and not args.no_text_magic:
+        args.text = normalize_text(args.text)
+    if args.title and not args.no_text_magic:
+        args.title = normalize_text(args.title)
+
     if not args.no_art and not os.path.exists(args.font):
+        if args.font.lower() in RANDOM_FONTS:
+            # pick a font once, otherwise art would pick a new one on every redraw
+            args.font = indirect_font(
+                args.font.lower(),
+                "0123456789:dhmsy" + (args.title or "") + (args.text or ""),
+            )
         # art silently falls back to the most similar font name, so check first
-        if args.font.lower() not in FONT_NAMES:
+        elif args.font.lower() not in FONT_NAMES:
             message = f"unknown font: {args.font}"
             suggestions = get_close_matches(args.font.lower(), FONT_NAMES)
             if suggestions:
@@ -242,9 +260,6 @@ def main():
             raise RuntimeError("File already exists: {}".format(args.outfile))
         if not os.access(dirname(abspath(args.outfile)), os.W_OK):
             raise RuntimeError("Unable to write file: {}".format(args.outfile))
-
-    if args.text and not args.no_text_magic:
-        args.text = normalize_text(args.text)
 
     args.voice_cmd = None
     if args.voice:

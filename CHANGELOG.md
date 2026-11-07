@@ -13,6 +13,8 @@
 * fixed countdown announcing 4/9/29 minutes instead of 5/10/30
 * fixed `--exec-cmd` receiving fractional seconds as `{0}`
 * fixed announcements and `--exec-cmd` repeating on keypresses
+* fixed random fonts (e.g. `-f random`) being rejected, they're now picked once at startup
+* fixed non-ASCII characters in `--title` not being replaced
 
 
 # 2.0.0
