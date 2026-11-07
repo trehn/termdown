@@ -5,7 +5,7 @@ def ttf_to_ascii(text, font_path, font_size, char_set):
     try:
         font = ImageFont.truetype(font_path, font_size)
     except IOError:
-        raise RuntimeError("Error: Could not load font from {font_path}")
+        raise RuntimeError(f"Error: Could not load font from {font_path}")
 
     # Figure out text dimensions
     dummy_img = Image.new("L", (1, 1))

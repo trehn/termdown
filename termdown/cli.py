@@ -1,9 +1,12 @@
 import os
 from argparse import ArgumentParser, RawTextHelpFormatter
 from curses import wrapper
+from difflib import get_close_matches
 from functools import wraps
 from os.path import abspath, dirname
 from sys import stderr
+
+from art import FONT_NAMES
 
 from . import VERSION
 from .modes import clock, countdown, stopwatch
@@ -217,6 +220,15 @@ def main():
     args = parser.parse_args()
     if args.exec_cmd and args.voice:  # prevent passing both --exec-cmd and --voice
         raise RuntimeError("--exec-cmd and --voice are mutually exclusive")
+
+    if not args.no_art and not os.path.exists(args.font):
+        # art silently falls back to the most similar font name, so check first
+        if args.font.lower() not in FONT_NAMES:
+            message = f"unknown font: {args.font}"
+            suggestions = get_close_matches(args.font.lower(), FONT_NAMES)
+            if suggestions:
+                message += f" (did you mean: {', '.join(suggestions)}?)"
+            parser.error(message)
 
     if args.time_format is None:
         args.time_format = (
