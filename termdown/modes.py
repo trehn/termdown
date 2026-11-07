@@ -30,6 +30,7 @@ def countdown(ui, args):
     # tick whenever the number of seconds left crosses a whole number
     ticker = Metronome(ui.input_queue, offset=target_time.timestamp())
     ticker.start()
+    last_announced = None
 
     while True:  # Outer loop to allow restarting countdown from scratch
         while True:  # Active countdown loop
@@ -70,20 +71,24 @@ def countdown(ui, args):
                     color = 1
                 ui.draw_text(countdown_text, color=color, end=end_text)
 
+            # the number of seconds as displayed
+            whole_seconds_left = int(ceil(seconds_left))
             annunciation = None
-            if seconds_left <= args.critical:
-                annunciation = str(int(ceil(seconds_left)))  # Announce whole seconds
-            elif int(ceil(seconds_left)) in (5, 10, 20, 30, 60):
+            if whole_seconds_left <= args.critical:
+                annunciation = str(whole_seconds_left)
+            elif whole_seconds_left in (5, 10, 20, 30, 60):
                 annunciation = "{} {} seconds".format(
-                    args.voice_prefix, int(ceil(seconds_left))
+                    args.voice_prefix, whole_seconds_left
                 )
-            elif int(ceil(seconds_left)) in (300, 600, 1800):
+            elif whole_seconds_left in (300, 600, 1800):
                 annunciation = "{} {} minutes".format(
-                    args.voice_prefix, int(seconds_left / 60)
+                    args.voice_prefix, whole_seconds_left // 60
                 )
-            elif int(ceil(seconds_left)) == 3600:
+            elif whole_seconds_left == 3600:
                 annunciation = "{} one hour".format(args.voice_prefix)
-            if annunciation or args.exec_cmd:
+            # don't repeat ourselves when redrawing due to keypresses
+            if whole_seconds_left != last_announced:
+                last_announced = whole_seconds_left
                 if (
                     annunciation and args.voice_cmd
                 ):  # Only announce if there is something to say
@@ -95,7 +100,9 @@ def countdown(ui, args):
                 if args.exec_cmd:
                     # Pass annunciation even if it's empty, format() handles it.
                     Popen(
-                        args.exec_cmd.format(seconds_left, annunciation or ""),
+                        args.exec_cmd.format(
+                            whole_seconds_left, annunciation or ""
+                        ),
                         stdout=DEVNULL,
                         stderr=STDOUT,
                         shell=True,
@@ -203,6 +210,7 @@ def stopwatch(ui, args):
     ticker.start()
     time_paused = None
     seconds_elapsed = 0
+    last_announced = None
     laps = []
 
     def now():
@@ -239,37 +247,41 @@ def stopwatch(ui, args):
 
             ui.draw_text(stopwatch_text, color=3 if ticker.is_paused else 0)
 
+        whole_seconds_elapsed = int(seconds_elapsed)
         annunciation = None
-        if int(seconds_elapsed) <= args.critical and seconds_elapsed >= 1:
-            annunciation = str(int(seconds_elapsed))
-        elif int(seconds_elapsed) in (5, 10, 20, 30, 40, 50, 60):
+        if 1 <= whole_seconds_elapsed <= args.critical:
+            annunciation = str(whole_seconds_elapsed)
+        elif whole_seconds_elapsed in (5, 10, 20, 30, 40, 50, 60):
             annunciation = "{} {} seconds".format(
-                args.voice_prefix, int(seconds_elapsed)
+                args.voice_prefix, whole_seconds_elapsed
             )
-        elif int(seconds_elapsed) in (120, 180, 300, 600, 1800):
+        elif whole_seconds_elapsed in (120, 180, 300, 600, 1800):
             annunciation = "{} {} minutes".format(
-                args.voice_prefix, int(seconds_elapsed / 60)
+                args.voice_prefix, whole_seconds_elapsed // 60
             )
-        elif int(seconds_elapsed) == 3600:
+        elif whole_seconds_elapsed == 3600:
             annunciation = "{} one hour".format(args.voice_prefix)
-        elif int(seconds_elapsed) % 3600 == 0 and seconds_elapsed > 1:
+        elif whole_seconds_elapsed % 3600 == 0 and whole_seconds_elapsed > 0:
             annunciation = "{} {} hours".format(
-                args.voice_prefix, int(seconds_elapsed / 3600)
+                args.voice_prefix, whole_seconds_elapsed // 3600
             )
 
-        if annunciation and args.voice_cmd:
-            Popen(
-                [args.voice_cmd, "-v", args.voice, annunciation.strip()],
-                stdout=DEVNULL,
-                stderr=STDOUT,
-            )
-        if args.exec_cmd:
-            Popen(
-                args.exec_cmd.format(seconds_elapsed, annunciation or ""),
-                stdout=DEVNULL,
-                stderr=STDOUT,
-                shell=True,
-            )
+        # don't repeat ourselves when redrawing due to keypresses
+        if whole_seconds_elapsed != last_announced:
+            last_announced = whole_seconds_elapsed
+            if annunciation and args.voice_cmd:
+                Popen(
+                    [args.voice_cmd, "-v", args.voice, annunciation.strip()],
+                    stdout=DEVNULL,
+                    stderr=STDOUT,
+                )
+            if args.exec_cmd:
+                Popen(
+                    args.exec_cmd.format(whole_seconds_elapsed, annunciation or ""),
+                    stdout=DEVNULL,
+                    stderr=STDOUT,
+                    shell=True,
+                )
 
         for input_action in ui.get_input_actions():
             if input_action == INPUT_PLUS:

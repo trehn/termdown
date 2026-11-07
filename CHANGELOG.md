@@ -10,6 +10,9 @@
 * fixed clock updating late after pausing
 * fixed time paused before a reset being added to the countdown when unpausing
 * fixed countdown restarting paused when it reached zero while paused
+* fixed countdown announcing 4/9/29 minutes instead of 5/10/30
+* fixed `--exec-cmd` receiving fractional seconds as `{0}`
+* fixed announcements and `--exec-cmd` repeating on keypresses
 
 
 # 2.0.0
