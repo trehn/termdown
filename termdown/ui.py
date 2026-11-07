@@ -1,6 +1,6 @@
 import curses
 import os
-from queue import Queue
+from queue import Empty, Queue
 from sys import stdout
 from threading import Lock, Thread
 from time import sleep
@@ -114,23 +114,45 @@ class Ui:
 
     def _input_thread_body(self):
         while True:
-            try:
-                with self.curses_lock:
-                    key = self.stdscr.getkey()
-            except Exception:
-                key = None
-            if key in ("q", "Q"):
-                self.input_queue.put(INPUT_EXIT)
-            elif key == " ":
-                self.input_queue.put(INPUT_PAUSE)
-            elif key in ("e", "E"):
-                self.input_queue.put(INPUT_END)
-            elif key in ("r", "R"):
-                self.input_queue.put(INPUT_RESET)
-            elif key in ("l", "L"):
-                self.input_queue.put(INPUT_LAP)
-            elif key == "+":
-                self.input_queue.put(INPUT_PLUS)
-            elif key == "-":
-                self.input_queue.put(INPUT_MINUS)
+            keys = []
+            with self.curses_lock:
+                # Read every pending key at once so held keys (autorepeat)
+                # don't pile up in the terminal's input buffer.
+                while True:
+                    try:
+                        keys.append(self.stdscr.getkey())
+                    except Exception:
+                        break
+            for key in keys:
+                self._handle_key(key)
             sleep(0.01)
+
+    def get_input_actions(self):
+        """
+        Blocks until at least one input action is available, then returns it
+        along with all other actions that are already queued. This lets the
+        caller apply a burst of events (e.g. from holding down a key) before
+        redrawing just once.
+        """
+        actions = [self.input_queue.get()]
+        while True:
+            try:
+                actions.append(self.input_queue.get_nowait())
+            except Empty:
+                return actions
+
+    def _handle_key(self, key):
+        if key in ("q", "Q"):
+            self.input_queue.put(INPUT_EXIT)
+        elif key == " ":
+            self.input_queue.put(INPUT_PAUSE)
+        elif key in ("e", "E"):
+            self.input_queue.put(INPUT_END)
+        elif key in ("r", "R"):
+            self.input_queue.put(INPUT_RESET)
+        elif key in ("l", "L"):
+            self.input_queue.put(INPUT_LAP)
+        elif key == "+":
+            self.input_queue.put(INPUT_PLUS)
+        elif key == "-":
+            self.input_queue.put(INPUT_MINUS)

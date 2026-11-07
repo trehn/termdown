@@ -101,24 +101,21 @@ def countdown(ui, args):
                         shell=True,
                     )
 
-            input_action = ui.input_queue.get()
-            if input_action == INPUT_PAUSE:
-                duration = ticker.pause()
-                if duration:
-                    target_time += timedelta(seconds=duration)
-            elif input_action == INPUT_EXIT:
-                exit(1)
-            elif input_action == INPUT_RESET:
-                target_time = parse_timestr(args.timespec)
-                # Continue the inner loop, seconds_left will be re-evaluated
-                continue
-            elif input_action == INPUT_PLUS:
-                target_time += timedelta(seconds=10)
-            elif input_action == INPUT_MINUS:
-                target_time -= timedelta(seconds=10)
-            elif input_action == INPUT_END:
-                args.end = not args.end
-                continue
+            for input_action in ui.get_input_actions():
+                if input_action == INPUT_PAUSE:
+                    duration = ticker.pause()
+                    if duration:
+                        target_time += timedelta(seconds=duration)
+                elif input_action == INPUT_EXIT:
+                    exit(1)
+                elif input_action == INPUT_RESET:
+                    target_time = parse_timestr(args.timespec)
+                elif input_action == INPUT_PLUS:
+                    target_time += timedelta(seconds=10)
+                elif input_action == INPUT_MINUS:
+                    target_time -= timedelta(seconds=10)
+                elif input_action == INPUT_END:
+                    args.end = not args.end
 
         # After the active countdown loop, handle the "time is up" state.
 
@@ -181,17 +178,17 @@ def clock(ui, args):
 
             ui.draw_text(clock_text, color=3 if ticker.is_paused else 0)
 
-        input_action = ui.input_queue.get()
-        if input_action == INPUT_EXIT:
-            break
-        if input_action == INPUT_PLUS:
-            offset += timedelta(seconds=10)
-        elif input_action == INPUT_MINUS:
-            offset -= timedelta(seconds=10)
-        elif input_action == INPUT_PAUSE:
-            ticker.pause()
-        elif input_action == INPUT_RESET:
-            offset = timedelta(0)
+        for input_action in ui.get_input_actions():
+            if input_action == INPUT_EXIT:
+                return
+            if input_action == INPUT_PLUS:
+                offset += timedelta(seconds=10)
+            elif input_action == INPUT_MINUS:
+                offset -= timedelta(seconds=10)
+            elif input_action == INPUT_PAUSE:
+                ticker.pause()
+            elif input_action == INPUT_RESET:
+                offset = timedelta(0)
 
 
 def stopwatch(ui, args):
@@ -262,32 +259,30 @@ def stopwatch(ui, args):
                 shell=True,
             )
 
-        input_action = ui.input_queue.get()
-        if input_action == INPUT_PLUS:
-            time_started -= 10
-        elif input_action == INPUT_MINUS:
-            time_started += 10
-        elif input_action == INPUT_PAUSE:
-            duration = ticker.pause()
-            if duration:  # unpaused
-                time_started += duration
-                time_paused = None
-            else:
-                time_paused = monotonic()
-        elif input_action == INPUT_EXIT:
-            break
-        elif input_action == INPUT_RESET:
-            laps = []
-            if time_paused is not None:
-                # Stay paused, but rebase the start to the pause instant so the
-                # display resets to 0 instead of going negative by the time spent
-                # paused before the reset.
-                time_started = time_paused
-            else:
-                time_started = monotonic()
-        elif input_action == INPUT_LAP:
-            lap_time = monotonic()
-            laps.append(lap_time - time_started)
-            time_started = lap_time
-
-    return (monotonic() - time_started, laps)
+        for input_action in ui.get_input_actions():
+            if input_action == INPUT_PLUS:
+                time_started -= 10
+            elif input_action == INPUT_MINUS:
+                time_started += 10
+            elif input_action == INPUT_PAUSE:
+                duration = ticker.pause()
+                if duration:  # unpaused
+                    time_started += duration
+                    time_paused = None
+                else:
+                    time_paused = monotonic()
+            elif input_action == INPUT_EXIT:
+                return (monotonic() - time_started, laps)
+            elif input_action == INPUT_RESET:
+                laps = []
+                if time_paused is not None:
+                    # Stay paused, but rebase the start to the pause instant so the
+                    # display resets to 0 instead of going negative by the time spent
+                    # paused before the reset.
+                    time_started = time_paused
+                else:
+                    time_started = monotonic()
+            elif input_action == INPUT_LAP:
+                lap_time = monotonic()
+                laps.append(lap_time - time_started)
+                time_started = lap_time

@@ -2,6 +2,7 @@
 
 * fixed unknown font names silently falling back to a different font
 * fixed font path missing from TTF/OTF loading error
+* fixed display lagging behind when holding down keys (#107)
 
 
 # 2.0.0
