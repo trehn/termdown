@@ -139,6 +139,7 @@ def parse_timestr(timestr):
     Parse a string describing a point in time.
     Returns a timezone-aware datetime in UTC to avoid issues with DST changes.
     """
+    timestr = timestr.strip()
     timedelta_secs = parse_timedelta(timestr)
 
     if timedelta_secs is not None:
